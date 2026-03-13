@@ -1,0 +1,44 @@
+{
+  "id": "aichat",
+  "realm": "aichat",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "aichat-web",
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "aichat-web",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ],
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": [ "*" ],
+      "webOrigins": [ "*" ],
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

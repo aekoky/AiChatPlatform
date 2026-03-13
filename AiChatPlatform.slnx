@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/BuildingBlocks/">
+    <Project Path="BuildingBlocks/BuildingBlocks.Core/BuildingBlocks.Core.csproj" />
+  </Folder>
+  <Folder Name="/ChatService/">
+    <Project Path="ChatService/ChatService.Api/ChatService.Api.csproj" />
+    <Project Path="ChatService/ChatService.Application/ChatService.Application.csproj" />
+    <Project Path="ChatService/ChatService.Domain/ChatService.Domain.csproj" />
+    <Project Path="ChatService/ChatService.Infrastructure/ChatService.Infrastructure.csproj" Id="508bbde3-be26-49f5-995a-b9d480253f77" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>
