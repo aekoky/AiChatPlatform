@@ -1,3 +1,5 @@
+using ChatService.Domain.ValueObjects;
+
 namespace ChatService.Application.Dtos;
 
 public record MessageDto
@@ -9,6 +11,8 @@ public record MessageDto
     public Guid SenderId { get; init; }
 
     public string Content { get; init; } = string.Empty;
+
+    public MessageRole Role { get; init; }
 
     public DateTime SentAt { get; init; }
 }

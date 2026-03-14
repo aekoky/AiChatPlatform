@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
-using ChatService.Application.Features.StartChat;
+using ChatService.Application.Services;
 using ChatService.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +14,7 @@ var keycloakAudience = builder.Configuration["Keycloak:Audience"] ?? throw new I
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddScoped<IPromptBuilder, PromptBuilder>();
 
 // OpenAPI configuration with OAuth2 token support via Transformer
 builder.Services.AddEndpointsApiExplorer();
@@ -85,7 +86,7 @@ builder.Services.ConfigureWolverineMarten(martenDbConn);
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.Discovery.IncludeAssembly(typeof(StartChatCommand).Assembly);
+    opts.ConfigureWolverine(builder.Configuration);
 });
 
 var app = builder.Build();

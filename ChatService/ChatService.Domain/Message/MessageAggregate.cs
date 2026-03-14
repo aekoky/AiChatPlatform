@@ -1,5 +1,6 @@
 using BuildingBlocks.Core;
 using ChatService.Domain.Message.Events;
+using ChatService.Domain.ValueObjects;
 
 namespace ChatService.Domain.Message;
 
@@ -9,13 +10,15 @@ public class MessageAggregate : BaseAggregate
 
     public string Content { get; private set; } = string.Empty;
 
+    public MessageRole Role { get; set; }
+
     public DateTime SentAt { get; private set; }
 
     public MessageAggregate()
     {
     }
 
-    public static MessageAggregate Create(Guid id, Guid sessionId, Guid senderId, string content)
+    public static MessageAggregate Create(Guid id, Guid sessionId, Guid senderId, string content, MessageRole role)
     {
         if (id == Guid.Empty) throw new DomainException("Message id cannot be empty.");
         if (senderId == Guid.Empty) throw new DomainException("Sender id cannot be empty.");
@@ -23,8 +26,7 @@ public class MessageAggregate : BaseAggregate
 
         var message = new MessageAggregate();
 
-        var @event = MessageCreatedEvent.Create(id, sessionId, senderId, content);
-
+        var @event = MessageCreatedEvent.Create(id, sessionId, senderId, content, role);
         message.ApplyAndEnqueue(@event, e => message.Apply((MessageCreatedEvent)e));
 
         return message;
@@ -35,6 +37,7 @@ public class MessageAggregate : BaseAggregate
         Id = @event.Id;
         SenderId = @event.SenderId;
         Content = @event.Content;
+        Role = @event.Role;
         SentAt = @event.SentAt;
 
         Version++;

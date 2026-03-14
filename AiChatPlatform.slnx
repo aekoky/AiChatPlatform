@@ -1,5 +1,11 @@
 <Solution>
+  <Folder Name="/AiService/">
+    <Project Path="AiService/AiService.Application/AiService.Application.csproj" Id="0cce244d-0846-4bad-985e-540872405fe6" />
+    <Project Path="AiService/AiService.Infrastructure/AiService.Infrastructure.csproj" Id="c1fcef9c-f79c-41d0-8f00-f6b55affa3b2" />
+    <Project Path="AiService/AiService.Worker/AiService.Worker.csproj" Id="1b1e06a8-c52b-4d39-aa03-72098d883315" />
+  </Folder>
   <Folder Name="/BuildingBlocks/">
+    <Project Path="BuildingBlocks/BuildingBlocks.Contracts/BuildingBlocks.Contracts.csproj" Id="aba6183d-147e-450a-b515-d40530ac0f34" />
     <Project Path="BuildingBlocks/BuildingBlocks.Core/BuildingBlocks.Core.csproj" />
   </Folder>
   <Folder Name="/ChatService/">

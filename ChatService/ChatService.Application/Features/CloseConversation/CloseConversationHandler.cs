@@ -1,11 +1,13 @@
 using BuildingBlocks.Core;
 using ChatService.Domain.Session;
+using System.Collections;
+using Wolverine;
 
 namespace ChatService.Application.Features.CloseConversation;
 
 public static class CloseConversationHandler
 {
-    public static async Task Handle(
+    public static async Task<IEnumerable<object>> Handle(
         CloseConversationCommand command,
         IEventStoreRepository<SessionAggregate> repository,
         CancellationToken ct)
@@ -14,11 +16,13 @@ public static class CloseConversationHandler
 
         if (aggregate is null)
         {
-            return;
+            return [];
         }
 
         aggregate.Delete();
 
-        await repository.SaveAsync(aggregate, expectedVersion: aggregate.Version, ct).ConfigureAwait(false);
+        repository.Save(aggregate, expectedVersion: aggregate.Version);
+
+        return aggregate.DequeueUncommittedEvents();
     }
 }

@@ -1,17 +1,20 @@
 using BuildingBlocks.Core;
 using ChatService.Domain.Message;
+using ChatService.Domain.ValueObjects;
+using Wolverine;
 
 namespace ChatService.Application.Features.SendMessage;
 
 public static class SendMessageHandler
 {
-    public static async Task Handle(
+    public static IEnumerable<object> Handle(
         SendMessageCommand command,
-        IEventStoreRepository<MessageAggregate> repository,
-        CancellationToken ct)
+        IEventStoreRepository<MessageAggregate> repository)
     {
-        var message = MessageAggregate.Create(command.Id, command.SessionId, command.SenderId, command.Content);
+        var aggregate = MessageAggregate.Create(command.Id, command.SessionId, command.SenderId, command.Content, MessageRole.User);
 
-        await repository.SaveAsync(message, expectedVersion: 0, ct).ConfigureAwait(false);
+        repository.Save(aggregate, expectedVersion: 0);
+
+        return aggregate.DequeueUncommittedEvents();
     }
 }

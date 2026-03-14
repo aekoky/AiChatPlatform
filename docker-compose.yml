@@ -11,6 +11,7 @@ services:
       - ConnectionStrings__Marten=Host=postgres;Port=5432;Database=aichat;Username=postgres;Password=postgres
       - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
       - Keycloak__Audience=aichat-web
+      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
       - postgres
       - keycloak
@@ -43,14 +44,60 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./Keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     depends_on:
       - postgres
     networks:
       - app-network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./RabbitMQ/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./RabbitMQ/rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - app-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app-network
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull llama3 && wait"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  aiserviceworker:
+    image: ${DOCKER_REGISTRY-}aiserviceworker
+    build:
+      context: .
+      dockerfile: AiService/AiService.Worker/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Ollama__BaseUrl=http://ollama:11434
+      - Ollama__Model=llama3
+      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+      - ollama
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
+  rabbitmq_data:
+  ollama_data:
 
 networks:
   app-network:

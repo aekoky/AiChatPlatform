@@ -1,0 +1,131 @@
+{
+  "permissions": [
+    {
+      "configure": ".*",
+      "read": ".*",
+      "user": "rabbitmq",
+      "vhost": "/",
+      "write": ".*"
+    }
+  ],
+  "users": [
+    {
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "name": "rabbitmq",
+      "password_hash": "HqhmkSM7NAbt6ufxtH5YfIvQjsHOZMLqh7uf/Y5fS9mgCKq0",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "queues": [
+    {
+      "name": "llm-requests",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "llm-tokens",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "llm-completed",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "llm-gave-up.chatservice",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "llm-gave-up.notificationservice",
+      "vhost": "/",
+      "durable": true
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "llm-requests",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "llm-tokens",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "llm-completed",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "llm-gave-up",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "llm-requests",
+      "vhost": "/",
+      "destination": "llm-requests",
+      "destination_type": "queue",
+      "routing_key": "llm-requests",
+      "arguments": {}
+    },
+    {
+      "source": "llm-tokens",
+      "vhost": "/",
+      "destination": "llm-tokens",
+      "destination_type": "queue",
+      "routing_key": "llm-tokens",
+      "arguments": {}
+    },
+    {
+      "source": "llm-completed",
+      "vhost": "/",
+      "destination": "llm-completed",
+      "destination_type": "queue",
+      "routing_key": "llm-completed",
+      "arguments": {}
+    },
+    {
+      "source": "llm-gave-up",
+      "vhost": "/",
+      "destination": "llm-gave-up.chatservice",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "llm-gave-up",
+      "vhost": "/",
+      "destination": "llm-gave-up.notificationservice",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ]
+}
