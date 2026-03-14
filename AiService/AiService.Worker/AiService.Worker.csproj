@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Contracts\BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Core\BuildingBlocks.Core.csproj" />
     <ProjectReference Include="..\AiService.Application\AiService.Application.csproj" />
     <ProjectReference Include="..\AiService.Infrastructure\AiService.Infrastructure.csproj" />
   </ItemGroup>

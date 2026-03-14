@@ -63,9 +63,7 @@ public class ConversationSaga : Saga
 
     // AiService gave up — unblock the saga so new user messages can still be processed
     public async Task Handle(
-        [SagaIdentityFrom(nameof(LlmResponseGaveUpEvent.SessionId))] LlmResponseGaveUpEvent message,
-        IMessageContext context,
-        CancellationToken cancellationToken)
+        [SagaIdentityFrom(nameof(LlmResponseGaveUpEvent.SessionId))] LlmResponseGaveUpEvent message)
     {
         if (ActiveRequestId != message.RequestId)
             return;
@@ -77,7 +75,7 @@ public class ConversationSaga : Saga
         PendingMessageIds.Clear();
     }
 
-    public void Handle(SessionDeletedEvent e) => MarkCompleted();
+    public void Handle(SessionDeletedEvent _) => MarkCompleted();
 
     private async Task StartProcessing(
         Guid sessionId,

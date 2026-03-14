@@ -5,12 +5,17 @@ using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using ChatService.Application.Services;
 using ChatService.Infrastructure;
+using BuildingBlocks.Core.Options;
+using ChatService.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Keycloak Authentication Configuration
-var keycloakAuthority = builder.Configuration["Keycloak:Authority"] ?? throw new InvalidOperationException("Keycloak:Authority is missing.");
-var keycloakAudience = builder.Configuration["Keycloak:Audience"] ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
+builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection(KeycloakOptions.SectionName));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
+
+var keycloakOptions = builder.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
+    ?? throw new InvalidOperationException("Keycloak options are missing.");
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -35,8 +40,8 @@ builder.Services.AddOpenApi(options =>
             {
                 AuthorizationCode = new OpenApiOAuthFlow
                 {
-                    AuthorizationUrl = new Uri($"{keycloakAuthority}/protocol/openid-connect/auth"),
-                    TokenUrl = new Uri($"{keycloakAuthority}/protocol/openid-connect/token"),
+                    AuthorizationUrl = new Uri($"{keycloakOptions.Authority}/protocol/openid-connect/auth"),
+                    TokenUrl = new Uri($"{keycloakOptions.Authority}/protocol/openid-connect/token"),
                     Scopes = new Dictionary<string, string>
                     {
                         { "openid", "OpenId" },
@@ -72,11 +77,11 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = keycloakAuthority;
+        options.Authority = keycloakOptions.Authority;
         options.RequireHttpsMetadata = false; // Dev only
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidAudience = keycloakAudience
+            ValidAudience = keycloakOptions.Audience
         };
     });
 
@@ -86,7 +91,7 @@ builder.Services.ConfigureWolverineMarten(martenDbConn);
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.ConfigureWolverine(builder.Configuration);
+    opts.ConfigureWolverine(builder.Services);
 });
 
 var app = builder.Build();

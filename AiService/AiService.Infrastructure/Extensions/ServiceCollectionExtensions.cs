@@ -1,16 +1,19 @@
-using Microsoft.Extensions.Configuration;
+using AiService.Infrastructure.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OllamaSharp;
 
 namespace AiService.Infrastructure.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddLlmClient(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddLlmClient(this IServiceCollection services)
     {
-        services.AddChatClient(new OllamaApiClient(configuration["Ollama:BaseUrl"]!, configuration["Ollama:Model"]!));
+        services.AddChatClient(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+            return new OllamaApiClient(options.BaseUrl, options.Model);
+        });
 
         return services;
     }

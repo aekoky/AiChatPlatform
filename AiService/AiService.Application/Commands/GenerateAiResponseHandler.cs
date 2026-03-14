@@ -27,11 +27,11 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
                 // Shutdown — don't retry, let Wolverine requeue
                 throw;
             }
-            catch (Exception ex) when (attempt < MaxRetries)
+            catch (Exception) when (attempt < MaxRetries)
             {
                 await Task.Delay(TimeSpan.FromSeconds(attempt * 2), ct);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await context.PublishAsync(new LlmResponseGaveUpEvent(
                     message.RequestId,
