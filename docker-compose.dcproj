@@ -6,7 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
-    <DockerServiceUrl>http://localhost:{ServicePort}/swagger</DockerServiceUrl>
+    <DockerServiceUrl>http://localhost:8000/swagger</DockerServiceUrl>
     <DockerServiceName>chatserviceapi</DockerServiceName>
     <DockerTargetOS>Linux</DockerTargetOS>
   </PropertyGroup>

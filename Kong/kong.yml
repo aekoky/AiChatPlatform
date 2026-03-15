@@ -1,0 +1,53 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  # ─── ChatService API ──────────────────────────────────────────────────────────
+  - name: chat-service
+    url: http://chatserviceapi:8080
+    routes:
+      - name: chat-routes
+        paths:
+          - /api/Chat
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ─── ChatService Docs ─────────────────────────────────────────────────────────
+  - name: chat-service-docs
+    url: http://chatserviceapi:8080
+    routes:
+      - name: scalar-route
+        paths:
+          - /scalar
+        strip_path: false
+        protocols:
+          - http
+          - https
+      - name: swagger-route
+        paths:
+          - /swagger
+        strip_path: false
+        protocols:
+          - http
+          - https
+      - name: openapi-route
+        paths:
+          - /openapi/v1.json
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ─── NotificationService (SignalR) ───────────────────────────────────────────
+  - name: notification-service
+    url: http://notificationserviceapi:8080
+    routes:
+      - name: signalr-route
+        paths:
+          - /hubs/chat
+        strip_path: false
+        protocols:
+          - http
+          - https

@@ -11,11 +11,14 @@ using ChatService.Infrastructure.Options;
 var builder = WebApplication.CreateBuilder(args);
 
 // Keycloak Authentication Configuration
+builder.Services.Configure<OpenApiOptions>(builder.Configuration.GetSection(OpenApiOptions.SectionName));
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection(KeycloakOptions.SectionName));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 
 var keycloakOptions = builder.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
     ?? throw new InvalidOperationException("Keycloak options are missing.");
+var openApiOptions = builder.Configuration.GetSection(OpenApiOptions.SectionName).Get<OpenApiOptions>()
+    ?? throw new InvalidOperationException("OpenApi options are missing.");
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -27,6 +30,10 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
+        document.Servers =
+        [
+            new OpenApiServer { Url = openApiOptions.ServerUrl }
+        ];
         document.Info = new OpenApiInfo
         {
             Title = "AiChatPlatform API",
