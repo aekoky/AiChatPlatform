@@ -26,13 +26,12 @@ builder.UseWolverine(opts =>
     opts.ListenToRabbitQueue("llm-requests")
         .Sequential();
 
-    // Stream tokens back to ChatService
     opts.PublishMessage<LlmTokenGeneratedEvent>()
         .ToRabbitQueue("llm-tokens");
 
-    // Publish completed response to ChatService
+    // Broadcast llm-completed to fanout exchange → chatservice + notificationservice queues
     opts.PublishMessage<LlmResponseCompletedEvent>()
-        .ToRabbitQueue("llm-completed");
+        .ToRabbitExchange("llm-completed");
 
     // Broadcast gave-up to fanout exchange → chatservice + notificationservice queues
     opts.PublishMessage<LlmResponseGaveUpEvent>()

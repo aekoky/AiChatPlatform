@@ -1,4 +1,5 @@
 using BuildingBlocks.Contracts.Events;
+using BuildingBlocks.Contracts.ValueObjects;
 using BuildingBlocks.Core;
 using ChatService.Application.Services;
 using ChatService.Domain.Message;
@@ -13,12 +14,13 @@ namespace ChatService.Application.Sagas;
 public class ConversationSaga : Saga
 {
     public Guid Id { get; set; }
+    public Guid UserId { get; set; }
     public bool IsProcessing { get; set; }
     public Guid? ActiveRequestId { get; set; }
     public Queue<Guid> PendingMessageIds { get; set; } = new();
 
     public static ConversationSaga Start(SessionCreatedEvent e)
-        => new() { Id = e.Id };
+        => new() { Id = e.Id, UserId = e.UserId };
 
     public async Task Handle(
         [SagaIdentityFrom(nameof(MessageCreatedEvent.SessionId))] MessageCreatedEvent message,
@@ -30,7 +32,7 @@ public class ConversationSaga : Saga
             return;
 
         if (!IsProcessing)
-            await StartProcessing(message.SessionId, promptBuilder, context, cancellationToken);
+            await StartProcessing(message.SessionId, message.SenderId, promptBuilder, context, cancellationToken);
         else
             PendingMessageIds.Enqueue(message.Id);
     }
@@ -48,7 +50,7 @@ public class ConversationSaga : Saga
         var aiMessage = MessageAggregate.Create(
             Guid.NewGuid(),
             message.SessionId,
-            message.RequestId,
+            message.UserId,
             message.FullResponse,
             MessageRole.Assistant);
 
@@ -56,7 +58,7 @@ public class ConversationSaga : Saga
         ActiveRequestId = null;
 
         if (PendingMessageIds.TryDequeue(out _))
-            await StartProcessing(message.SessionId, promptBuilder, context, cancellationToken);
+            await StartProcessing(message.SessionId, message.UserId, promptBuilder, context, cancellationToken);
         else
             IsProcessing = false;
     }
@@ -74,11 +76,27 @@ public class ConversationSaga : Saga
         // Drain pending queue — they won't get responses either, discard or re-enqueue
         PendingMessageIds.Clear();
     }
+    public async Task Handle(
+     [SagaIdentityFrom(nameof(SessionDeletedEvent.Id))] SessionDeletedEvent message,
+     IMessageContext context)
+    {
+        if (IsProcessing && ActiveRequestId.HasValue)
+        {
+            await context.PublishAsync(new LlmResponseGaveUpEvent(
+                ActiveRequestId.Value,
+                message.Id,
+                UserId,
+                GaveUpReasons.SessionDeleted));
+        }
+
+        MarkCompleted();
+    }
 
     public void Handle(SessionDeletedEvent _) => MarkCompleted();
 
     private async Task StartProcessing(
         Guid sessionId,
+        Guid userId,
         IPromptBuilder promptBuilder,
         IMessageContext context,
         CancellationToken cancellationToken)
@@ -91,6 +109,7 @@ public class ConversationSaga : Saga
         await context.PublishAsync(new LlmResponseRequestedEvent(
             ActiveRequestId.Value,
             sessionId,
+            userId,
             prompt));
     }
 }

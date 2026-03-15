@@ -14,6 +14,10 @@
     <Project Path="ChatService/ChatService.Domain/ChatService.Domain.csproj" />
     <Project Path="ChatService/ChatService.Infrastructure/ChatService.Infrastructure.csproj" Id="508bbde3-be26-49f5-995a-b9d480253f77" />
   </Folder>
+  <Folder Name="/NotificationService/">
+    <Project Path="NotificationService/NotificationService.Api/NotificationService.Api.csproj" Id="58bb5ac5-f731-493f-b3c9-911b34db6205" />
+    <Project Path="NotificationService/NotificationService.Application/NotificationService.Application.csproj" Id="e959281d-e3a0-4219-950e-4a6f8deb9bbc" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>

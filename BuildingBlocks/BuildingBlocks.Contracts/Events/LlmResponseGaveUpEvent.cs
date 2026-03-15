@@ -2,4 +2,6 @@
 
 public record LlmResponseGaveUpEvent(
     Guid RequestId,
-    Guid SessionId);
+    Guid SessionId,
+    Guid UserId,
+    string Reason);

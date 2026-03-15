@@ -75,7 +75,7 @@ public static class WolverineMartenConfiguration
             .ToRabbitQueue("llm-requests");
 
         // AiService → ChatService: receive completed response, route to saga
-        opts.ListenToRabbitQueue("llm-completed")
+        opts.ListenToRabbitQueue("llm-completed.chatservice")
             .PreFetchCount(10);
 
         opts.ListenToRabbitQueue("llm-gave-up.chatservice")

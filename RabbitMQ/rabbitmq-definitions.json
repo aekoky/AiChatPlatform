@@ -33,7 +33,12 @@
       "durable": true
     },
     {
-      "name": "llm-completed",
+      "name": "llm-completed.chatservice",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "llm-completed.notificationservice",
       "vhost": "/",
       "durable": true
     },
@@ -70,7 +75,7 @@
     {
       "name": "llm-completed",
       "vhost": "/",
-      "type": "direct",
+      "type": "fanout",
       "durable": true,
       "auto_delete": false,
       "internal": false,
@@ -106,9 +111,17 @@
     {
       "source": "llm-completed",
       "vhost": "/",
-      "destination": "llm-completed",
+      "destination": "llm-completed.chatservice",
       "destination_type": "queue",
-      "routing_key": "llm-completed",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "llm-completed",
+      "vhost": "/",
+      "destination": "llm-completed.notificationservice",
+      "destination_type": "queue",
+      "routing_key": "",
       "arguments": {}
     },
     {

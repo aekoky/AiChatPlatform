@@ -13,70 +13,34 @@ services:
       - Keycloak__Audience=aichat-web
       - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
-      - postgres
-      - keycloak
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - app-network
 
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: aichat
+  notificationserviceapi:
+    image: ${DOCKER_REGISTRY-}notificationserviceapi
+    build:
+      context: .
+      dockerfile: NotificationService/NotificationService.Api/Dockerfile
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.1
-    command: start-dev --import-realm
+      - "5001:8080"
     environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/aichat
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: postgres
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./Keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
+      - Keycloak__Audience=aichat-web
+      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
-      - postgres
+      keycloak:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - app-network
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./RabbitMQ/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./RabbitMQ/rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
-    networks:
-      - app-network
-
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - app-network
-    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull llama3 && wait"]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
 
   aiserviceworker:
     image: ${DOCKER_REGISTRY-}aiserviceworker
@@ -89,8 +53,104 @@ services:
       - Ollama__Model=llama3
       - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
-      - rabbitmq
-      - ollama
+      rabbitmq:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_MULTIPLE_DATABASES: aichat,keycloak
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    volumes:
+      - ./Keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./RabbitMQ/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./RabbitMQ/rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    entrypoint: ["/bin/sh", "-c", "ollama pull llama3"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    depends_on:
+      ollama:
+        condition: service_healthy
     networks:
       - app-network
 
