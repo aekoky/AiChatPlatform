@@ -1,0 +1,103 @@
+.chat-container {
+  height: 100vh;
+  background: var(--mat-sys-background);
+}
+
+.chat-sidenav {
+  width: 280px;
+  background: var(--mat-sys-surface-container-low);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  // mat-sidenav-content fills its container — use 100% not 100vh
+  // overflow:hidden prevents the content from becoming the scroll host
+  height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
+  background: var(--mat-sys-background);
+}
+
+.chat-toolbar {
+  background: var(--mat-sys-surface-container-low);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .toolbar-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+  }
+
+  .toolbar-spacer {
+    flex: 1;
+  }
+
+  .username-chip {
+    font-size: 0.8125rem;
+    padding: 4px 10px;
+    background: var(--mat-sys-primary-container);
+    border-radius: 12px;
+    color: var(--mat-sys-on-primary-container);
+    margin-right: 8px;
+  }
+
+  button {
+    color: var(--mat-sys-on-surface-variant);
+
+    &:hover {
+      color: var(--mat-sys-on-surface);
+    }
+  }
+}
+
+.no-session {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+  padding: 40px;
+
+  .no-session-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    color: var(--mat-sys-primary);
+    opacity: 0.3;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  // min-height: 0 is the KEY — without it, flex children ignore overflow:hidden
+  // and grow the parent. Do NOT set height:100% here (causes double-counting).
+  min-height: 0;
+  overflow: hidden;
+}

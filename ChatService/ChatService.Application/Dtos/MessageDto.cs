@@ -15,4 +15,6 @@ public record MessageDto
     public MessageRole Role { get; init; }
 
     public DateTime SentAt { get; init; }
+
+    public long Version { get; init; }
 }

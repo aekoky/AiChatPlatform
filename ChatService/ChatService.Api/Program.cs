@@ -5,7 +5,6 @@ using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using ChatService.Application.Services;
 using ChatService.Infrastructure;
-using BuildingBlocks.Core.Options;
 using ChatService.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);

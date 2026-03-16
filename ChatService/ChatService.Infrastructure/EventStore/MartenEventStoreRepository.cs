@@ -1,12 +1,11 @@
 using BuildingBlocks.Core;
-using JasperFx.Events;
 using Marten;
 
 namespace ChatService.Infrastructure.EventStore;
 
 public class MartenEventStoreRepository<TA>(IDocumentSession session) : IEventStoreRepository<TA> where TA : BaseAggregate, new()
 {
-    public async Task<TA?> LoadAsync(Guid streamId, CancellationToken cancellationToken = default)
+    public async Task<TA?> LoadAsync(Guid streamId, long expectedVersion, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -23,16 +22,13 @@ public class MartenEventStoreRepository<TA>(IDocumentSession session) : IEventSt
         }
     }
 
-    public void Save(TA aggregate, long expectedVersion)
+    public void Save(TA aggregate)
     {
         var events = aggregate.PeekUncommittedEvents();
 
         if (events is not { Length: > 0 })
             return;
 
-        if (expectedVersion >= 0)
-            session.Events.Append(aggregate.Id, expectedVersion + events.Length, [.. events]);
-        else
-            session.Events.Append(aggregate.Id, [.. events]);
+        session.Events.Append(aggregate.Id, aggregate.Version, [.. events]);
     }
 }

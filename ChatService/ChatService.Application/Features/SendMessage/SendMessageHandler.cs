@@ -13,7 +13,7 @@ public static class SendMessageHandler
     {
         var aggregate = MessageAggregate.Create(command.Id, command.SessionId, command.SenderId, command.Content, MessageRole.User);
 
-        repository.Save(aggregate, expectedVersion: 0);
+        repository.Save(aggregate);
 
         return aggregate.DequeueUncommittedEvents();
     }

@@ -51,3 +51,17 @@ services:
         protocols:
           - http
           - https
+
+  # ─── Angular SPA — catch-all (lowest priority, shortest path) ────────────────
+  # Kong routes by path specificity — longer paths above always win first
+  # No CORS needed — SPA and API share the same origin (localhost:8000)
+  - name: web-client
+    url: http://webclient:3000
+    routes:
+      - name: spa-route
+        paths:
+          - /
+        strip_path: false
+        protocols:
+          - http
+          - https

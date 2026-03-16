@@ -12,6 +12,7 @@ public static class ConversationProjectionLogic
         {
             Id = @event.Id,
             UserId = @event.UserId,
+            Title = @event.Title,
             StartedAt = @event.StartedAt,
             LastActivityAt = @event.LastActivityAt
         };
@@ -33,7 +34,8 @@ public static class ConversationProjectionLogic
 
         return current with
         {
-            LastActivityAt = DateTime.UtcNow
+            LastActivityAt = DateTime.UtcNow,
+            Closed = true
         };
     }
 }

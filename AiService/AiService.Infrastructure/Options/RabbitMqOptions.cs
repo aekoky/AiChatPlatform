@@ -1,4 +1,4 @@
-namespace BuildingBlocks.Core.Options;
+namespace AiService.Infrastructure.Options;
 
 public class RabbitMqOptions
 {

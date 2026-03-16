@@ -1,0 +1,23 @@
+<div
+  class="session-item"
+  [class.active]="isActive"
+  (click)="onSelect()"
+  role="button"
+  [attr.aria-label]="'Select session: ' + session.title"
+  tabindex="0"
+  (keydown.enter)="onSelect()"
+>
+  <div class="session-info">
+    <span class="session-title">{{ session.title }}</span>
+    <span class="session-time">{{ getRelativeTime(session.lastActivityAt) }}</span>
+  </div>
+  <button
+    mat-icon-button
+    class="delete-btn"
+    (click)="onDelete($event)"
+    matTooltip="Delete session"
+    aria-label="Delete session"
+  >
+    <mat-icon>delete_outline</mat-icon>
+  </button>
+</div>

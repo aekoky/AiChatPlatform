@@ -11,7 +11,7 @@ public static class ListUserConversationsHandler
         CancellationToken ct)
     {
         return await session.QueryListAsync<ConversationDto>(
-            q => q.Where(c => c.UserId == query.UserId),
+            q => q.Where(c => c.UserId == query.UserId && !c.Closed),
             ct).ConfigureAwait(false);
     }
 }

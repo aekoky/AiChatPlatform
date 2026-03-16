@@ -24,8 +24,13 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
                     await GenerateAndPublish(message, context, ct);
                     return;
                 }
-                catch (Exception) when (attempt < MaxRetries)
+                catch (Exception ex) when (attempt < MaxRetries)
                 {
+                    await context.PublishAsync(new LlmResponseRetryingEvent(
+                       message.RequestId,
+                       message.SessionId,
+                       message.UserId));
+
                     await Task.Delay(TimeSpan.FromSeconds(attempt * 2), ct);
                 }
             }
@@ -67,16 +72,17 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
         };
 
         var fullResponse = new StringBuilder();
-
+        var tokenCount = 0;
         await foreach (var update in chatClient.GetStreamingResponseAsync(messages, cancellationToken: ct))
         {
             var token = update.Text;
             if (string.IsNullOrEmpty(token)) continue;
 
             fullResponse.Append(token);
+            tokenCount++;
 
             await context.PublishAsync(
-                new LlmTokenGeneratedEvent(message.RequestId, message.UserId, message.SessionId, token));
+                new LlmTokenGeneratedEvent(message.RequestId, message.SessionId, message.UserId, token));
         }
 
         await context.PublishAsync(
@@ -84,6 +90,7 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
                 message.RequestId,
                 message.SessionId,
                 message.UserId,
-                fullResponse.ToString()));
+                fullResponse.ToString(),
+                tokenCount));
     }
 }

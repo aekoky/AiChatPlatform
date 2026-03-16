@@ -12,7 +12,7 @@ public static class CloseConversationHandler
         IEventStoreRepository<SessionAggregate> repository,
         CancellationToken ct)
     {
-        var aggregate = await repository.LoadAsync(command.SessionId, ct).ConfigureAwait(false);
+        var aggregate = await repository.LoadAsync(command.SessionId, command.Version, ct).ConfigureAwait(false);
 
         if (aggregate is null)
         {
@@ -21,7 +21,7 @@ public static class CloseConversationHandler
 
         aggregate.Delete();
 
-        repository.Save(aggregate, expectedVersion: aggregate.Version);
+        repository.Save(aggregate);
 
         return aggregate.DequeueUncommittedEvents();
     }

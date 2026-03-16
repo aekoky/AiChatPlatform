@@ -1,0 +1,41 @@
+<div class="session-list-container">
+  <div class="session-list-header">
+    <h3 class="app-brand">
+      <mat-icon class="brand-icon">smart_toy</mat-icon>
+      AI Chat
+    </h3>
+    <button
+      mat-flat-button
+      class="new-chat-btn"
+      (click)="openNewChatDialog()"
+      aria-label="Start new chat"
+    >
+      <mat-icon>add</mat-icon>
+      New Chat
+    </button>
+  </div>
+
+  @if (sessionStore.loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="32" />
+    </div>
+  }
+
+  @if (!sessionStore.loading() && sessionStore.sessions().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">forum</mat-icon>
+      <p>No conversations yet</p>
+      <span>Start a new chat to begin</span>
+    </div>
+  }
+
+  <div class="sessions-scroll">
+    @for (session of sessionStore.sessions(); track session.id) {
+      <app-session-item
+        [session]="session"
+        [isActive]="sessionStore.activeSessionId() === session.id"
+        (selected)="onSessionSelect(session.id)"
+      />
+    }
+  </div>
+</div>

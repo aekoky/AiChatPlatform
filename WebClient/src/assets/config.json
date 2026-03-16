@@ -1,0 +1,9 @@
+{
+  "keycloak": {
+    "url": "http://host.docker.internal:8080",
+    "realm": "aichat",
+    "clientId": "aichat-web"
+  },
+  "chatApiUrl": "http://localhost:8000",
+  "notificationUrl": "http://localhost:8000"
+}

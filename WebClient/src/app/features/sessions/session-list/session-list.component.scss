@@ -1,0 +1,105 @@
+.session-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 8px;
+  box-sizing: border-box;
+  background: var(--mat-sys-surface-container-low);
+
+  .session-list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 4px 16px;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    margin-bottom: 12px;
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--mat-sys-on-surface);
+      letter-spacing: 0.02em;
+
+      .brand-icon {
+        color: var(--mat-sys-primary);
+        font-size: 22px;
+      }
+    }
+
+    .new-chat-btn {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      mat-icon {
+        font-size: 18px;
+        margin-right: 4px;
+      }
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 40px 16px;
+    color: var(--mat-sys-on-surface-variant);
+    text-align: center;
+
+    .empty-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: var(--mat-sys-primary);
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--mat-sys-on-surface);
+    }
+
+    span {
+      font-size: 0.8rem;
+    }
+  }
+
+  .sessions-scroll {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--mat-sys-outline-variant);
+      border-radius: 2px;
+    }
+  }
+}

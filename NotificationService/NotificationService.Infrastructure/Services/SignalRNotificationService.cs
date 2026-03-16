@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using NotificationService.Application.Abstractions;
+using Microsoft.AspNetCore.SignalR;
+using NotificationService.Application.Services;
 
 namespace NotificationService.Infrastructure.Services;
 
@@ -16,4 +16,10 @@ public class SignalRNotificationService(IHubContext<ChatHub> hubContext) : INoti
         => await hubContext.Clients
             .User(userId.ToString())
             .SendAsync("ReceiveCompleted", new { requestId, sessionId }, ct);
-}
+
+    public async Task SendGaveUpAsync(
+        Guid userId, Guid requestId, Guid sessionId, string reason, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveGaveUp", new { requestId, sessionId, reason }, ct);
+}

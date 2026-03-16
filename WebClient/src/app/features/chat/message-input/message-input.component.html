@@ -1,0 +1,25 @@
+<div class="message-input-wrapper">
+  <mat-form-field class="input-field" appearance="outline" subscriptSizing="dynamic">
+    <textarea
+      matInput
+      [(ngModel)]="inputValue"
+      (keydown)="onKeydown($event)"
+      [readonly]="messageStore.isStreaming()"
+      placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
+      rows="1"
+      cdkTextareaAutosize
+      cdkAutosizeMinRows="1"
+      cdkAutosizeMaxRows="6"
+      aria-label="Message input"
+    ></textarea>
+  </mat-form-field>
+  <button
+    mat-icon-button
+    class="send-btn"
+    (click)="onSend()"
+    [disabled]="!inputValue.trim() || messageStore.isStreaming()"
+    aria-label="Send message"
+  >
+    <mat-icon>send</mat-icon>
+  </button>
+</div>

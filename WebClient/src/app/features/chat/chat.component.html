@@ -1,0 +1,35 @@
+<mat-sidenav-container class="chat-container">
+  <mat-sidenav mode="side" opened class="chat-sidenav">
+    <app-session-list />
+  </mat-sidenav>
+
+  <mat-sidenav-content class="chat-main">
+    <mat-toolbar class="chat-toolbar">
+      <span class="toolbar-title">
+        @if (sessionStore.activeSessionId()) {
+          {{ activeSessionTitle }}
+        } @else {
+          Select a conversation
+        }
+      </span>
+      <span class="toolbar-spacer"></span>
+      <span class="username-chip">{{ username }}</span>
+      <button mat-icon-button (click)="onLogout()" matTooltip="Sign out" aria-label="Sign out">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    @if (!sessionStore.activeSessionId()) {
+      <div class="no-session">
+        <mat-icon class="no-session-icon">forum</mat-icon>
+        <h2>Welcome, {{ username }}</h2>
+        <p>Select a conversation from the sidebar or start a new one.</p>
+      </div>
+    } @else {
+      <div class="chat-panel">
+        <app-message-list />
+        <app-message-input (send)="onSendMessage($event)" />
+      </div>
+    }
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -8,11 +8,13 @@ public record SessionCreatedEvent : BaseEvent
 
     public Guid UserId { get; init; }
 
+    public string Title { get; init; } = string.Empty;
+
     public DateTime StartedAt { get; init; }
 
     public DateTime LastActivityAt { get; init; }
 
-    public static SessionCreatedEvent Create(Guid id, Guid userId)
+    public static SessionCreatedEvent Create(Guid id, Guid userId, string title)
     {
         if (id == Guid.Empty) throw new DomainException("Session id cannot be empty.");
         if (userId == Guid.Empty) throw new DomainException("User id cannot be empty.");
@@ -23,6 +25,7 @@ public record SessionCreatedEvent : BaseEvent
         {
             Id = id,
             UserId = userId,
+            Title = title,
             StartedAt = now,
             LastActivityAt = now
         };

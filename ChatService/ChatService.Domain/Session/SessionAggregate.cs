@@ -7,6 +7,8 @@ public class SessionAggregate : BaseAggregate
 {
     public Guid UserId { get; private set; }
 
+    public string Title { get; private set; } = string.Empty;
+
     public DateTime StartedAt { get; private set; }
 
     public DateTime LastActivityAt { get; private set; }
@@ -17,14 +19,14 @@ public class SessionAggregate : BaseAggregate
     {
     }
 
-    public static SessionAggregate Create(Guid id, Guid userId)
+    public static SessionAggregate Create(Guid id, Guid userId, string title)
     {
         if (id == Guid.Empty) throw new DomainException("Session id cannot be empty.");
         if (userId == Guid.Empty) throw new DomainException("User id cannot be empty.");
 
         var aggregate = new SessionAggregate();
 
-        var @event = SessionCreatedEvent.Create(id, userId);
+        var @event = SessionCreatedEvent.Create(id, userId, title);
 
         aggregate.ApplyAndEnqueue(@event, e => aggregate.Apply((SessionCreatedEvent)e));
 
@@ -51,6 +53,7 @@ public class SessionAggregate : BaseAggregate
     {
         Id = @event.Id;
         UserId = @event.UserId;
+        Title = @event.Title;
         StartedAt = @event.StartedAt;
         LastActivityAt = @event.LastActivityAt;
 

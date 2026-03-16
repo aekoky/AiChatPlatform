@@ -7,7 +7,7 @@ public abstract class BaseAggregate : BaseEntity
     [NonSerialized]
     private readonly Queue<BaseEvent> _uncommittedEvents = new();
 
-    public BaseEvent[] PeekUncommittedEvents() => _uncommittedEvents.ToArray();
+    public BaseEvent[] PeekUncommittedEvents() => [.. _uncommittedEvents];
 
     public BaseEvent[] DequeueUncommittedEvents()
     {

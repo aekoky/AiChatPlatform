@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts.Events;
 using BuildingBlocks.Core;
-using BuildingBlocks.Core.Options;
 using ChatService.Application.Features.StartChat;
 using ChatService.Application.Sagas;
 using ChatService.Domain.Message.Events;
@@ -11,7 +10,6 @@ using ChatService.Infrastructure.Projections;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Wolverine;

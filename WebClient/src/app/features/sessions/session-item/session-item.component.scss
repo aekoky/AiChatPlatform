@@ -1,0 +1,75 @@
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  gap: 8px;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+
+    .delete-btn {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+
+  &.active {
+    background: var(--mat-sys-secondary-container);
+    border-left: 3px solid var(--mat-sys-primary);
+    padding-left: 9px;
+
+    .delete-btn {
+      opacity: 0.6;
+    }
+  }
+
+  .session-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+
+    .session-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--mat-sys-on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-time {
+      font-size: 0.75rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  .delete-btn {
+    // Always slightly visible so keyboard/touch users know it's there
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+
+    mat-icon {
+      font-size: 18px;
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    &:hover mat-icon,
+    &:focus-visible mat-icon {
+      color: var(--mat-sys-error);
+    }
+  }
+}

@@ -1,0 +1,67 @@
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+// ─── M3 Theme Definition ───────────────────────────────────────────────────
+// Define a dark Material 3 theme with a violet/purple primary palette
+$app-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$violet-palette,
+    tertiary: mat.$cyan-palette,
+  ),
+  typography: (
+    brand-family: 'Inter',
+    plain-family: 'Inter',
+  ),
+  density: (scale: 0)
+));
+
+// Apply the theme to all Material components at the :root level
+:root {
+  @include mat.all-component-themes($app-theme);
+  // Expose theme system tokens for use in component stylesheets
+  @include mat.system-level-colors($app-theme);
+  @include mat.system-level-typography($app-theme);
+}
+
+// ─── Global Reset ──────────────────────────────────────────────────────────
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--mat-sys-background);
+  color: var(--mat-sys-on-background);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ─── Scrollbars ────────────────────────────────────────────────────────────
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--mat-sys-primary-rgb, 187, 134, 252), 0.2);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(var(--mat-sys-primary-rgb, 187, 134, 252), 0.4);
+  }
+}

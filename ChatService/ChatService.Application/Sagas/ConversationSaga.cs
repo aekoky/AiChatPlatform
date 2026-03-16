@@ -32,7 +32,7 @@ public class ConversationSaga : Saga
             return;
 
         if (!IsProcessing)
-            await StartProcessing(message.SessionId, message.SenderId, promptBuilder, context, cancellationToken);
+            await StartProcessing(message.Id, message.SessionId, message.SenderId, promptBuilder, context, cancellationToken);
         else
             PendingMessageIds.Enqueue(message.Id);
     }
@@ -54,11 +54,11 @@ public class ConversationSaga : Saga
             message.FullResponse,
             MessageRole.Assistant);
 
-        repository.Save(aiMessage, 0);
+        repository.Save(aiMessage);
         ActiveRequestId = null;
 
-        if (PendingMessageIds.TryDequeue(out _))
-            await StartProcessing(message.SessionId, message.UserId, promptBuilder, context, cancellationToken);
+        if (PendingMessageIds.TryDequeue(out Guid requestId))
+            await StartProcessing(requestId, Id, UserId, promptBuilder, context, cancellationToken);
         else
             IsProcessing = false;
     }
@@ -95,6 +95,7 @@ public class ConversationSaga : Saga
     public void Handle(SessionDeletedEvent _) => MarkCompleted();
 
     private async Task StartProcessing(
+        Guid requestId,
         Guid sessionId,
         Guid userId,
         IPromptBuilder promptBuilder,
@@ -102,7 +103,7 @@ public class ConversationSaga : Saga
         CancellationToken cancellationToken)
     {
         IsProcessing = true;
-        ActiveRequestId = Guid.NewGuid();
+        ActiveRequestId = requestId;
 
         var prompt = await promptBuilder.BuildAsync(sessionId, cancellationToken);
 

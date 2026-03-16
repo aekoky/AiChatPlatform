@@ -1,0 +1,63 @@
+<div class="message-list">
+  @if (messageStore.loading()) {
+    <div class="loading-state">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>
+  }
+
+  @if (!messageStore.loading() && messageStore.messages().length === 0 && !messageStore.isStreaming()) {
+    <div class="empty-chat">
+      <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+      <p>Start the conversation</p>
+      <span>Send a message to begin chatting with AI</span>
+    </div>
+  }
+
+  @for (message of messageStore.messages(); track message.id) {
+    <div class="message-row" [class.user-row]="message.role === 0" [class.assistant-row]="message.role === 1">
+      @if (message.role === 1) {
+        <div class="avatar assistant-avatar">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+      }
+      <mat-card class="message-bubble" [class.user-bubble]="message.role === 0" [class.assistant-bubble]="message.role === 1">
+        <mat-card-content>
+          <p class="message-content">{{ message.content }}</p>
+          <span class="message-time">{{ message.sentAt | date:'shortTime' }}</span>
+        </mat-card-content>
+      </mat-card>
+      @if (message.role === 0) {
+        <div class="avatar user-avatar">
+          <mat-icon>person</mat-icon>
+        </div>
+      }
+    </div>
+  }
+
+  @if (messageStore.isStreaming()) {
+    <div class="message-row assistant-row">
+      <div class="avatar assistant-avatar">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+      <mat-card class="message-bubble assistant-bubble streaming-bubble">
+        <mat-card-content>
+          @if (!messageStore.streamingContent()) {
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+          } @else {
+            <p class="message-content">{{ messageStore.streamingContent() }}</p>
+            <span class="cursor-blink">▋</span>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+
+  @if (messageStore.error()) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ messageStore.error() }}</span>
+    </div>
+  }
+
+  <div #scrollAnchor></div>
+</div>

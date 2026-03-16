@@ -4,5 +4,6 @@ public record LlmResponseCompletedEvent(
     Guid RequestId,
     Guid SessionId,
     Guid UserId,
-    string FullResponse
+    string FullResponse,
+    int TokenCount
 );

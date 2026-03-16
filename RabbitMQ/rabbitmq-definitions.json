@@ -33,6 +33,11 @@
       "durable": true
     },
     {
+      "name": "llm-retrying",
+      "vhost": "/",
+      "durable": true
+    },
+    {
       "name": "llm-completed.chatservice",
       "vhost": "/",
       "durable": true
@@ -65,6 +70,15 @@
     },
     {
       "name": "llm-tokens",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "llm-retrying",
       "vhost": "/",
       "type": "direct",
       "durable": true,
@@ -106,6 +120,14 @@
       "destination": "llm-tokens",
       "destination_type": "queue",
       "routing_key": "llm-tokens",
+      "arguments": {}
+    },
+    {
+      "source": "llm-retrying",
+      "vhost": "/",
+      "destination": "llm-retrying",
+      "destination_type": "queue",
+      "routing_key": "llm-retrying",
       "arguments": {}
     },
     {
