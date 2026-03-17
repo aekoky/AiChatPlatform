@@ -23,9 +23,9 @@ graph TD
     Keycloak[Keycloak Auth]
 
     subgraph "Backend Services"
-        ChatApi[ChatService API]
-        NotifApi[NotificationService SignalR]
-        AiWorker[AiService Worker]
+        ChatApi["ChatService (Event Sourcing)"]
+        NotifApi["NotificationService (SignalR)"]
+        AiWorker["AiService (Worker)"]
     end
 
     subgraph "Infrastructure"
@@ -52,22 +52,29 @@ graph TD
 
 ## 📂 Project Structure
 
-1.  **`ChatService`**: Core domain logic, event sourcing, and session management.
-2.  **`AiService`**: Decoupled worker that interacts with LLMs (Ollama/OpenAI) and streams tokens.
-3.  **`NotificationService`**: SignalR hub that bridges the event bus to the client for real-time streaming.
-4.  **`WebClient`**: Modern Angular SPA providing a premium chat interface.
-5.  **`BuildingBlocks`**: Shared contracts and core infrastructure abstractions.
-6.  **`Kong`**: Declarative configuration for the API Gateway.
+1.  **`ChatService`**: Core domain logic using **Marten** for event sourcing. Manages chat sessions and message aggregates.
+2.  **`AiService`**: Decoupled worker that interacts with LLMs (Ollama/OpenAI) via `Microsoft.Extensions.AI`.
+3.  **`NotificationService`**: ASP.NET Core SignalR hub that bridges the asynchronous event bus to the client.
+4.  **`WebClient`**: Modern Angular SPA with specialized SignalR transport management for gateway compatibility.
+5.  **`BuildingBlocks`**: Shared contracts, base entities, and event store abstractions.
 
 ---
 
-## 🧠 End-to-End Flow
+## 🔬 Advanced Technical Highlights
 
-1.  **User Message**: Sent via `WebClient` to `ChatService` (saved as `MessageCreatedEvent`).
-2.  **Saga Orchestration**: `ConversationSaga` triggers `LlmResponseRequestedEvent`.
-3.  **Real-time Generation**: `AiService` streams tokens via RabbitMQ.
-4.  **Instant Delivery**: `NotificationService` pushes tokens to the browser via SignalR.
-5.  **Persistence**: Once complete, the saga saves the full AI response message.
+### 1. Resilient Saga Orchestration
+The `ConversationSaga` (Wolverine) ensures reliable interaction between users and the AI:
+- **Message Queuing**: If a user sends messages while the AI is currently generating a response, the saga queues these requests and processes them sequentially once the current generation completes.
+- **Fail-Safe Terminal States**: Handles `SessionDeletedEvent` by proactively canceling active AI requests and cleaning up saga state.
+
+### 2. Deterministic Token Streaming
+Real-time delivery is hardened against race conditions:
+- **StreamBufferService**: The `NotificationService` tracks expected vs. delivered tokens. If the "Completion" signal arrives via RabbitMQ before all tokens have been pushed to SignalR, it buffers the terminal signal until the stream is complete.
+- **Transport Reliability**: The WebClient strategically uses **Long Polling** and **Server-Sent Events** to maintain stable connections through the Kong Gateway.
+
+### 3. Event Sourcing & Concurrency
+- **Optimistic Concurrency**: Marten enforces stream versioning. Any attempt to update a session or message with an stale version results in a `ConcurrencyException`, preventing "lost updates" in a distributed environment.
+- **Inline Projections**: Read models (Session lists, Message history) are updated **In-Line** with the event storage, providing strong consistency for the primary user view.
 
 ---
 
@@ -85,15 +92,11 @@ All services are accessible via the **Kong Gateway** at `http://localhost:8000`:
 *   **Web Application**: `http://localhost:8000/`
 *   **API Documentation (Scalar)**: `http://localhost:8000/scalar`
 *   **SignalR Hub**: `http://localhost:8000/hubs/chat`
-*   **Auth (Keycloak)**: `http://localhost:8080`
-
-### Authentication
-*   **Test User**: `testuser`
-*   **Password**: `password`
+*   **Auth (Keycloak)**: `http://localhost:8080` (User: `testuser` / Pwd: `password`)
 
 ---
 
 ## 🛠️ Design Principles
-*   **Event-Driven**: Complete decoupling via RabbitMQ.
-*   **High Performance**: Minimal latency using SignalR streaming and Marten inline projections.
-*   **Premium UX**: Elegant material design with "ChatGPT-like" typing effects.
+*   **Isolation**: The AI processing is physically and logically decoupled from the Chat management via RabbitMQ.
+*   **Observability**: Detailed event tracking across the entire lifecycle (Requested -> Tokens -> Completed/GaveUp).
+*   **Performance**: Optimized for sub-second feedback using direct token streaming.

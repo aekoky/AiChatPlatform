@@ -19,6 +19,11 @@ public static class CloseConversationHandler
             return [];
         }
 
+        if (aggregate.UserId != command.UserId)
+        {
+            throw new DomainException("Forbidden");
+        }
+
         aggregate.Delete();
 
         repository.Save(aggregate);

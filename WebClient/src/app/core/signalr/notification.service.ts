@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
 import { ConfigService } from '../config/config.service';
 import { KeycloakService } from '../auth/keycloak.service';
+import { Subject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -9,9 +10,13 @@ export class NotificationService {
   private config = inject(ConfigService);
   private keycloak = inject(KeycloakService);
 
-  private tokenHandlers: ((requestId: string, sessionId: string, token: string) => void)[] = [];
-  private completedHandlers: ((requestId: string, sessionId: string) => void)[] = [];
-  private gaveUpHandlers: ((requestId: string, sessionId: string, reason: string) => void)[] = [];
+  private token$$ = new Subject<{requestId: string, sessionId: string, token: string}>();
+  private completed$$ = new Subject<{requestId: string, sessionId: string}>();
+  private gaveUp$$ = new Subject<{requestId: string, sessionId: string, reason: string}>();
+
+  readonly token$ = this.token$$.asObservable();
+  readonly completed$ = this.completed$$.asObservable();
+  readonly gaveUp$ = this.gaveUp$$.asObservable();
 
   connect(): void {
     this.connection = new HubConnectionBuilder()
@@ -28,18 +33,6 @@ export class NotificationService {
     this.connection.start().catch(console.error);
   }
 
-  onToken(handler: (requestId: string, sessionId: string, token: string) => void): void {
-    this.tokenHandlers.push(handler);
-  }
-
-  onCompleted(handler: (requestId: string, sessionId: string) => void): void {
-    this.completedHandlers.push(handler);
-  }
-
-  onGaveUp(handler: (requestId: string, sessionId: string, reason: string) => void): void {
-    this.gaveUpHandlers.push(handler);
-  }
-
   private registerHandlers(): void {
     this.connection.off('ReceiveToken');
     this.connection.off('ReceiveCompleted');
@@ -50,20 +43,20 @@ export class NotificationService {
       const requestId = data.requestId ?? data.RequestId;
       const sessionId = data.sessionId ?? data.SessionId;
       const token = data.token ?? data.Token;
-      this.tokenHandlers.forEach(h => h(requestId, sessionId, token));
+      this.token$$.next({ requestId, sessionId, token });
     });
     this.connection.on('ReceiveCompleted', (data) => {
       console.log('[SignalR] ReceiveCompleted:', data);
       const requestId = data.requestId ?? data.RequestId;
       const sessionId = data.sessionId ?? data.SessionId;
-      this.completedHandlers.forEach(h => h(requestId, sessionId));
+      this.completed$$.next({ requestId, sessionId });
     });
     this.connection.on('ReceiveGaveUp', (data) => {
       console.log('[SignalR] ReceiveGaveUp:', data);
       const requestId = data.requestId ?? data.RequestId;
       const sessionId = data.sessionId ?? data.SessionId;
       const reason = data.reason ?? data.Reason;
-      this.gaveUpHandlers.forEach(h => h(requestId, sessionId, reason));
+      this.gaveUp$$.next({ requestId, sessionId, reason });
     });
   }
 

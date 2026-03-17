@@ -92,8 +92,6 @@ public class ConversationSaga : Saga
         MarkCompleted();
     }
 
-    public void Handle(SessionDeletedEvent _) => MarkCompleted();
-
     private async Task StartProcessing(
         Guid requestId,
         Guid sessionId,
@@ -105,12 +103,12 @@ public class ConversationSaga : Saga
         IsProcessing = true;
         ActiveRequestId = requestId;
 
-        var prompt = await promptBuilder.BuildAsync(sessionId, cancellationToken);
+        var messages = await promptBuilder.BuildAsync(sessionId, cancellationToken);
 
         await context.PublishAsync(new LlmResponseRequestedEvent(
             ActiveRequestId.Value,
             sessionId,
             userId,
-            prompt));
+            messages));
     }
 }

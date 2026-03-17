@@ -49,7 +49,7 @@ public class ChatController(IMessageBus messageBus) : ControllerBase
     [HttpPost("close")]
     public async Task<IActionResult> CloseConversation([FromBody] CloseConversationRequest request)
     {
-        var command = new CloseConversationCommand(request.SessionId, request.Version);
+        var command = new CloseConversationCommand(request.SessionId, request.Version, User.GetUserId());
         await _messageBus.InvokeAsync(command);
         return Accepted();
     }
@@ -60,7 +60,7 @@ public class ChatController(IMessageBus messageBus) : ControllerBase
     [HttpGet("conversation/{sessionId}")]
     public async Task<IActionResult> GetConversation(Guid sessionId)
     {
-        var query = new GetConversationQuery(sessionId);
+        var query = new GetConversationQuery(sessionId, User.GetUserId());
         var result = await _messageBus.InvokeAsync<ConversationDto?>(query);
         return Ok(result);
     }
@@ -71,7 +71,7 @@ public class ChatController(IMessageBus messageBus) : ControllerBase
     [HttpGet("conversation/{sessionId}/messages")]
     public async Task<IActionResult> GetMessages(Guid sessionId)
     {
-        var query = new GetMessagesQuery(sessionId);
+        var query = new GetMessagesQuery(sessionId, User.GetUserId());
         var result = await _messageBus.InvokeAsync<IReadOnlyList<MessageDto>>(query);
         return Ok(result);
     }

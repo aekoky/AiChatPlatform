@@ -1,3 +1,3 @@
 namespace ChatService.Application.Features.GetMessages;
 
-public record GetMessagesQuery(Guid SessionId);
+public record GetMessagesQuery(Guid SessionId, Guid UserId);

@@ -1,10 +1,9 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using BuildingBlocks.Contracts.Events;
+using System.Collections.Generic;
 
 namespace ChatService.Application.Services;
 
 public interface IPromptBuilder
 {
-    Task<string> BuildAsync(Guid sessionId, CancellationToken ct);
+    Task<IReadOnlyList<ChatTurn>> BuildAsync(Guid sessionId, CancellationToken ct);
 }

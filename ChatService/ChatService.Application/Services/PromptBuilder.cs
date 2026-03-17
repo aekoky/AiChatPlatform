@@ -1,29 +1,32 @@
-using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using BuildingBlocks.Contracts.Events;
+using ChatService.Domain.ValueObjects;
 using ChatService.Application.Dtos;
 using Marten;
+using System.Collections.Generic;
 
 namespace ChatService.Application.Services;
 
 public class PromptBuilder(IQuerySession session) : IPromptBuilder
 {
-    public async Task<string> BuildAsync(Guid sessionId, CancellationToken ct)
+    public async Task<IReadOnlyList<ChatTurn>> BuildAsync(Guid sessionId, CancellationToken ct)
     {
         var messages = await session.Query<MessageDto>()
             .Where(m => m.SessionId == sessionId)
             .OrderBy(m => m.SentAt)
-            .Take(20) // Limit to last 20 messages for context
+            .Take(20)
             .ToListAsync(ct);
 
-        var sb = new StringBuilder();
-        foreach (var msg in messages)
-        {
-            sb.AppendLine($"{msg.Role.ToString().ToLower()}: {msg.Content}");
-        }
+        var history = messages.Select(msg => new ChatTurn(
+            msg.Role == MessageRole.User ? "user" : "assistant",
+            msg.Content));
 
-        return sb.ToString();
+        var result = new List<ChatTurn>
+        {
+            new("system", "You are a helpful assistant.")
+        };
+        
+        result.AddRange(history);
+        
+        return result;
     }
 }

@@ -24,7 +24,7 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
                     await GenerateAndPublish(message, context, ct);
                     return;
                 }
-                catch (Exception ex) when (attempt < MaxRetries)
+                catch (Exception) when (attempt < MaxRetries)
                 {
                     await context.PublishAsync(new LlmResponseRetryingEvent(
                        message.RequestId,
@@ -33,14 +33,16 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
 
                     await Task.Delay(TimeSpan.FromSeconds(attempt * 2), ct);
                 }
+                catch (Exception) when (attempt == MaxRetries)
+                {
+                    await context.PublishAsync(new LlmResponseGaveUpEvent(
+                        message.RequestId,
+                        message.SessionId,
+                        message.UserId,
+                        GaveUpReasons.MaxRetriesExceeded));
+                    return;
+                }
             }
-
-            // All retries exhausted
-            await context.PublishAsync(new LlmResponseGaveUpEvent(
-                message.RequestId,
-                message.SessionId,
-                message.UserId,
-                GaveUpReasons.MaxRetriesExceeded));
         }
         catch (OperationCanceledException)
         {
@@ -66,10 +68,12 @@ public class GenerateAiResponseHandler(IChatClient chatClient)
         IMessageContext context,
         CancellationToken ct)
     {
-        var messages = new List<ChatMessage>
-        {
-            new(ChatRole.User, message.Prompt)
-        };
+        var messages = message.Messages
+            .Select(t => new ChatMessage(
+                t.Role == "system"    ? ChatRole.System    :
+                t.Role == "assistant" ? ChatRole.Assistant : ChatRole.User,
+                t.Content))
+            .ToList();
 
         var fullResponse = new StringBuilder();
         var tokenCount = 0;

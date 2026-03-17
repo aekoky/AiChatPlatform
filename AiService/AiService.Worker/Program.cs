@@ -12,7 +12,7 @@ builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(Ollam
 builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection(OpenAIOptions.SectionName));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 
-builder.Services.AddOpenAILlmClient();
+builder.Services.AddOllamaLlmClient();
 
 builder.UseWolverine(opts =>
 {

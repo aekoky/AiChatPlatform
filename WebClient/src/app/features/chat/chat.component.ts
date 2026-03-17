@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, inject, NgZone, OnDestroy, OnInit
+  ChangeDetectionStrategy, Component, DestroyRef, inject, NgZone, OnDestroy, OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -7,6 +7,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionStore } from '../../store/session.store';
 import { MessageStore } from '../../store/message.store';
 import { NotificationService } from '../../core/signalr/notification.service';
@@ -39,34 +40,41 @@ export class ChatComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private keycloak = inject(KeycloakService);
   private ngZone = inject(NgZone);
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.sessionStore.loadSessions();
     this.notificationService.connect();
 
-    this.notificationService.onToken((requestId, sessionId, token) => {
-      this.ngZone.run(() => {
-        if (sessionId === this.sessionStore.activeSessionId()) {
-          this.messageStore.appendToken(token);
-        }
+    this.notificationService.token$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, token }: { sessionId: string, token: string }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.appendToken(token);
+          }
+        });
       });
-    });
 
-    this.notificationService.onCompleted((requestId, sessionId) => {
-      this.ngZone.run(() => {
-        if (sessionId === this.sessionStore.activeSessionId()) {
-          this.messageStore.finalizeStream();
-        }
+    this.notificationService.completed$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId }: { sessionId: string }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.finalizeStream();
+          }
+        });
       });
-    });
 
-    this.notificationService.onGaveUp((requestId, sessionId, reason) => {
-      this.ngZone.run(() => {
-        if (sessionId === this.sessionStore.activeSessionId()) {
-          this.messageStore.handleGaveUp(reason);
-        }
+    this.notificationService.gaveUp$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, reason }: { sessionId: string, reason: string }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.handleGaveUp(reason);
+          }
+        });
       });
-    });
   }
 
   ngOnDestroy(): void {

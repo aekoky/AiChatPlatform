@@ -10,8 +10,15 @@ public static class GetConversationHandler
         IReadOnlyEventStore session,
         CancellationToken ct)
     {
-        return await session.QueryFirstOrDefaultAsync<ConversationDto>(
+        var result = await session.QueryFirstOrDefaultAsync<ConversationDto>(
             q => q.Where(c => c.Id == query.SessionId),
             ct).ConfigureAwait(false);
+
+        if (result is not null && result.UserId != query.UserId)
+        {
+            throw new DomainException("Forbidden");
+        }
+
+        return result;
     }
 }
