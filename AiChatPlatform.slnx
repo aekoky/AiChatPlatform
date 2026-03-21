@@ -14,6 +14,16 @@
     <Project Path="ChatService/ChatService.Domain/ChatService.Domain.csproj" />
     <Project Path="ChatService/ChatService.Infrastructure/ChatService.Infrastructure.csproj" Id="508bbde3-be26-49f5-995a-b9d480253f77" />
   </Folder>
+  <Folder Name="/DocumentIngestion/">
+    <Project Path="DocumentIngestion/DocumentIngestion.Application/DocumentIngestion.Application.csproj" Id="2d98550d-4c10-4d2e-b4cf-548d110f9048" />
+    <Project Path="DocumentIngestion/DocumentIngestion.Infrastructure/DocumentIngestion.Infrastructure.csproj" Id="06945550-6403-44d9-aeea-ab55da7876ba" />
+    <Project Path="DocumentIngestion/DocumentIngestion.Worker/DocumentIngestion.Worker.csproj" Id="17690b6d-489e-4e9a-b369-248fbd4332ee" />
+  </Folder>
+  <Folder Name="/DocumentService/">
+    <Project Path="DocumentService/DocumentService.Api/DocumentService.Api.csproj" Id="5d133b50-de0e-473b-bb39-8215b6754168" />
+    <Project Path="DocumentService/DocumentService.Application/DocumentService.Application.csproj" Id="4e58f152-a1e7-4d17-8360-1c87cead550b" />
+    <Project Path="DocumentService/DocumentService.Infrastructure/DocumentService.Infrastructure.csproj" Id="e87f7e64-d6dd-412f-b96d-a43b93c4778d" />
+  </Folder>
   <Folder Name="/NotificationService/">
     <Project Path="NotificationService/NotificationService.Api/NotificationService.Api.csproj" Id="58bb5ac5-f731-493f-b3c9-911b34db6205" />
     <Project Path="NotificationService/NotificationService.Application/NotificationService.Application.csproj" Id="e959281d-e3a0-4219-950e-4a6f8deb9bbc" />

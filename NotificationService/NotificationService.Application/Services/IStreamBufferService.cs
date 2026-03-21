@@ -4,7 +4,7 @@ public interface IStreamBufferService
 {
     void Expect(Guid requestId, int tokenCount);
 
-    bool TokenDelivered(Guid requestId);
+    bool TokensDelivered(Guid requestId, int count);
 
     bool IsComplete(Guid requestId);
 

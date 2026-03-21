@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using NotificationService.Application.Services;
 
 namespace NotificationService.Api.Services;
@@ -21,4 +21,14 @@ public class SignalRNotificationService(IHubContext<ChatHub> hubContext) : INoti
     => await hubContext.Clients
         .User(userId.ToString())
         .SendAsync("ReceiveGaveUp", new { requestId, sessionId, reason }, ct);
+
+    public async Task SendTitleUpdatedAsync(Guid userId, Guid sessionId, string newTitle, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveTitleUpdated", new { sessionId, newTitle }, ct);
+
+    public async Task SendSummaryUpdatedAsync(Guid userId, Guid sessionId, string newSummary, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveSummaryUpdated", new { sessionId, newSummary }, ct);
 }

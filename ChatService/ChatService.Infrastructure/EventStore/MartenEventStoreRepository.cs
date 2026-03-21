@@ -16,7 +16,7 @@ public class MartenEventStoreRepository<TA>(IDocumentSession session) : IEventSt
 
             return aggregate;
         }
-        catch
+        catch (Marten.Exceptions.NonExistentStreamException)
         {
             return default;
         }

@@ -1,17 +1,16 @@
-﻿using BuildingBlocks.Contracts.Events;
+﻿using BuildingBlocks.Contracts.LlmEvents;
 using NotificationService.Application.Services;
 
 namespace NotificationService.Application.Commands;
 
-public class LlmTokenGeneratedHandler(
+public class LlmTokensGeneratedHandler(
     INotificationService notificationService,
     IStreamBufferService streamBuffer)
 {
     public async Task HandleAsync(
-        LlmTokenGeneratedEvent message,
+        LlmTokensGeneratedEvent message,
         CancellationToken ct)
     {
-        // Push token to client immediately
         await notificationService.SendTokenAsync(
             message.UserId,
             message.RequestId,
@@ -19,15 +18,13 @@ public class LlmTokenGeneratedHandler(
             message.Token,
             ct);
 
-        // Atomic — returns true exactly once when last token is delivered
-        if (streamBuffer.TokenDelivered(message.RequestId))
+        if (streamBuffer.TokensDelivered(message.RequestId, message.TokenCount))
         {
             await notificationService.SendCompletedAsync(
                 message.UserId,
                 message.RequestId,
                 message.SessionId,
                 ct);
-
             streamBuffer.Clear(message.RequestId);
         }
     }

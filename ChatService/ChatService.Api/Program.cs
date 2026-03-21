@@ -1,11 +1,11 @@
-using Wolverine;
+using ChatService.Application.Services;
+using ChatService.Infrastructure;
+using ChatService.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
-using ChatService.Application.Services;
-using ChatService.Infrastructure;
-using ChatService.Infrastructure.Options;
+using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +35,7 @@ builder.Services.AddOpenApi(options =>
         ];
         document.Info = new OpenApiInfo
         {
-            Title = "AiChatPlatform API",
+            Title = "AiChatPlatform Chat API",
             Version = "v1"
         };
 
@@ -109,7 +109,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1");
+        options.SwaggerEndpoint("/chat/openapi/v1.json", "OpenAPI V1");
         options.OAuthClientId("aichat-web");
         options.OAuthClientSecret(string.Empty);
         options.OAuthUsePkce();

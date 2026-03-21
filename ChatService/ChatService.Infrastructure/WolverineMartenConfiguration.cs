@@ -1,4 +1,5 @@
-using BuildingBlocks.Contracts.Events;
+using BuildingBlocks.Contracts.LlmEvents;
+using BuildingBlocks.Contracts.SessionEvents;
 using BuildingBlocks.Core;
 using ChatService.Application.Features.StartChat;
 using ChatService.Application.Sagas;
@@ -33,10 +34,12 @@ public static class WolverineMartenConfiguration
             opts.Events.AddEventType<MessageCreatedEvent>();
             opts.Events.AddEventType<SessionUpdatedEvent>();
             opts.Events.AddEventType<SessionDeletedEvent>();
+            opts.Events.AddEventType<SessionSummaryUpdatedEvent>();
+            opts.Events.AddEventType<SessionTitleUpdatedEvent>();
 
-            // Inline projections (synchronous, no daemon needed)
-            opts.Projections.Add<ConversationProjection>(ProjectionLifecycle.Inline);
-            opts.Projections.Add<MessageProjection>(ProjectionLifecycle.Inline);
+            // Async projections (handled by the Async Daemon to prevent write-blocking)
+            opts.Projections.Add<ConversationProjection>(ProjectionLifecycle.Async);
+            opts.Projections.Add<MessageProjection>(ProjectionLifecycle.Async);
 
             return opts;
         })
@@ -71,6 +74,15 @@ public static class WolverineMartenConfiguration
         // ChatService → AiService: send LLM request
         opts.PublishMessage<LlmResponseRequestedEvent>()
             .ToRabbitQueue("llm-requests");
+
+        opts.PublishMessage<SessionSummarizeRequestedEvent>()
+            .ToRabbitQueue("llm-summarization");
+
+        opts.PublishMessage<SessionTitleUpdatedNotificationEvent>()
+            .ToRabbitExchange("session-notifications");
+
+        opts.PublishMessage<SessionSummaryUpdatedNotificationEvent>()
+            .ToRabbitExchange("session-notifications");
 
         // AiService → ChatService: receive completed response, route to saga
         opts.ListenToRabbitQueue("llm-completed.chatservice")

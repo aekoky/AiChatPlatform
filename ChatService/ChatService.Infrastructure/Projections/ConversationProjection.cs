@@ -12,9 +12,13 @@ public class ConversationProjection : MultiStreamProjection<ConversationDto, Gui
         CreateEvent<SessionCreatedEvent>(e => ConversationProjectionLogic.Handle(e)!);
         ProjectEvent<MessageCreatedEvent>((c, e) => ConversationProjectionLogic.Handle(e, c)!);
         ProjectEvent<SessionDeletedEvent>((c, e) => ConversationProjectionLogic.Handle(c)!);
+        ProjectEvent<SessionSummaryUpdatedEvent>((c, e) => ConversationProjectionLogic.Handle(e, c)!);
+        ProjectEvent<SessionTitleUpdatedEvent>((c, e) => ConversationProjectionLogic.Handle(e, c)!);
 
         Identity<SessionCreatedEvent>(x => x.Id);
         Identity<MessageCreatedEvent>(x => x.SessionId);
         Identity<SessionDeletedEvent>(x => x.Id);
+        Identity<SessionSummaryUpdatedEvent>(x => x.Id);
+        Identity<SessionTitleUpdatedEvent>(x => x.Id);
     }
 }

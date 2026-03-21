@@ -28,7 +28,6 @@ export class NotificationService {
       .withAutomaticReconnect()
       .build();
 
-    this.connection.onreconnected(() => this.registerHandlers());
     this.registerHandlers();
     this.connection.start().catch(console.error);
   }

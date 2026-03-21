@@ -2,40 +2,26 @@ _format_version: "3.0"
 _transform: true
 
 services:
-  # ─── ChatService API ──────────────────────────────────────────────────────────
+  # ─── ChatService ──────────────────────────────────────────────────
   - name: chat-service
     url: http://chatserviceapi:8080
     routes:
-      - name: chat-routes
+      - name: chat-all
         paths:
-          - /api/Chat
-        strip_path: false
+          - /chat
+        strip_path: true
         protocols:
           - http
           - https
 
-  # ─── ChatService Docs ─────────────────────────────────────────────────────────
-  - name: chat-service-docs
-    url: http://chatserviceapi:8080
+  # ─── DocumentService ──────────────────────────────────────────────
+  - name: document-service
+    url: http://documentserviceapi:8080
     routes:
-      - name: scalar-route
+      - name: document-all
         paths:
-          - /scalar
-        strip_path: false
-        protocols:
-          - http
-          - https
-      - name: swagger-route
-        paths:
-          - /swagger
-        strip_path: false
-        protocols:
-          - http
-          - https
-      - name: openapi-route
-        paths:
-          - /openapi/v1.json
-        strip_path: false
+          - /document
+        strip_path: true
         protocols:
           - http
           - https

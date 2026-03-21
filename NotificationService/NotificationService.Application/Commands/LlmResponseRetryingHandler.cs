@@ -1,4 +1,4 @@
-﻿using BuildingBlocks.Contracts.Events;
+﻿using BuildingBlocks.Contracts.LlmEvents;
 using NotificationService.Application.Services;
 
 namespace NotificationService.Application.Commands;

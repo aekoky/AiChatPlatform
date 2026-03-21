@@ -1,15 +1,4 @@
-#!/bin/bash
 set -e
-
-# This script is executed by the Postgres container on first startup.
-# It reads the POSTGRES_MULTIPLE_DATABASES environment variable (comma-separated)
-# and creates each database if it does not already exist.
-#
-# Usage in docker-compose.yml:
-#   environment:
-#     POSTGRES_MULTIPLE_DATABASES: aichat,keycloak
-#   volumes:
-#     - ./Postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
 
 create_database() {
     local database=$1
@@ -31,4 +20,22 @@ if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
     echo "All databases created."
 else
     echo "POSTGRES_MULTIPLE_DATABASES is not set — skipping multiple database creation."
+fi
+
+if [ -n "$POSTGRES_PGSTORE_DATABASE" ]; then
+    echo "Setting up pgvector on database: $POSTGRES_PGSTORE_DATABASE"
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_PGSTORE_DATABASE" <<-EOSQL
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE SCHEMA IF NOT EXISTS rag;
+EOSQL
+    if [ -f /scripts/rag-schema.sql ]; then
+        echo "Executing rag-schema.sql on $POSTGRES_PGSTORE_DATABASE..."
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_PGSTORE_DATABASE" -f /scripts/rag-schema.sql
+        echo "rag-schema.sql executed successfully."
+    else
+        echo "rag-schema.sql not found at /scripts/rag-schema.sql — skipping."
+    fi
+    echo "pgvector ready on $POSTGRES_PGSTORE_DATABASE."
+else
+    echo "POSTGRES_PGSTORE_DATABASE is not set — skipping pgvector setup."
 fi

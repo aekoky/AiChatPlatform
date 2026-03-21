@@ -1,7 +1,6 @@
 using BuildingBlocks.Core;
 using ChatService.Domain.Message;
 using ChatService.Domain.ValueObjects;
-using Wolverine;
 
 namespace ChatService.Application.Features.SendMessage;
 
@@ -11,7 +10,11 @@ public static class SendMessageHandler
         SendMessageCommand command,
         IEventStoreRepository<MessageAggregate> repository)
     {
-        var aggregate = MessageAggregate.Create(command.Id, command.SessionId, command.SenderId, command.Content, MessageRole.User);
+        var aggregate = MessageAggregate.Create(command.Id,
+           command.SessionId,
+           command.SenderId,
+           command.Content,
+           MessageRole.User);
 
         repository.Save(aggregate);
 

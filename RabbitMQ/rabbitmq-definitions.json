@@ -28,6 +28,11 @@
       "durable": true
     },
     {
+      "name": "llm-summarization",
+      "vhost": "/",
+      "durable": true
+    },
+    {
       "name": "llm-tokens",
       "vhost": "/",
       "durable": true
@@ -56,36 +61,34 @@
       "name": "llm-gave-up.notificationservice",
       "vhost": "/",
       "durable": true
+    },
+    {
+      "name": "document-uploaded",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "document-indexed",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "document-failed",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "document-deleted",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "session-notifications",
+      "vhost": "/",
+      "durable": true
     }
   ],
   "exchanges": [
-    {
-      "name": "llm-requests",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "llm-tokens",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "llm-retrying",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
     {
       "name": "llm-completed",
       "vhost": "/",
@@ -103,33 +106,18 @@
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "session-notifications",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
     }
   ],
   "bindings": [
-    {
-      "source": "llm-requests",
-      "vhost": "/",
-      "destination": "llm-requests",
-      "destination_type": "queue",
-      "routing_key": "llm-requests",
-      "arguments": {}
-    },
-    {
-      "source": "llm-tokens",
-      "vhost": "/",
-      "destination": "llm-tokens",
-      "destination_type": "queue",
-      "routing_key": "llm-tokens",
-      "arguments": {}
-    },
-    {
-      "source": "llm-retrying",
-      "vhost": "/",
-      "destination": "llm-retrying",
-      "destination_type": "queue",
-      "routing_key": "llm-retrying",
-      "arguments": {}
-    },
     {
       "source": "llm-completed",
       "vhost": "/",
@@ -158,6 +146,14 @@
       "source": "llm-gave-up",
       "vhost": "/",
       "destination": "llm-gave-up.notificationservice",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "session-notifications",
+      "vhost": "/",
+      "destination": "session-notifications",
       "destination_type": "queue",
       "routing_key": "",
       "arguments": {}

@@ -1,5 +1,4 @@
-using BuildingBlocks.Contracts.Events;
-using System.Collections.Generic;
+using BuildingBlocks.Contracts.Models;
 
 namespace ChatService.Application.Services;
 

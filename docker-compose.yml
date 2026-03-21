@@ -43,7 +43,7 @@ services:
       - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
       - Keycloak__Audience=aichat-web
       - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
-      - OpenApi__ServerUrl=http://localhost:8000
+      - OpenApi__ServerUrl=http://localhost:8000/chat
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,6 +51,74 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - app-network
+
+  documentserviceapi:
+    image: ${DOCKER_REGISTRY-}documentserviceapi
+    build:
+      context: .
+      dockerfile: DocumentService/DocumentService.Api/Dockerfile
+    expose:
+      - "8080"   # internal only — Kong routes to it
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
+      - S3__Endpoint=http://minio:9000
+      - S3__AccessKey=minioadmin
+      - S3__SecretKey=minioadmin
+      - S3__Bucket=documents
+      - S3__ForcePathStyle=true
+      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
+      - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
+      - Keycloak__Audience=aichat-web
+      - OpenApi__ServerUrl=http://localhost:8000/document
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  documentingestionworker:
+    image: ${DOCKER_REGISTRY-}documentingestionworker
+    build:
+      context: .
+      dockerfile: DocumentIngestion/DocumentIngestion.Worker/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
+      - Ollama__BaseUrl=http://ollama:11434
+      - Ollama__EmbeddingModel=nomic-embed-text
+      - Ollama__TimeoutSeconds=600
+      - S3__Endpoint=http://minio:9000
+      - S3__AccessKey=minioadmin
+      - S3__SecretKey=minioadmin
+      - S3__Bucket=documents
+      - KreuzbergParser__EnableChunking=true
+      - KreuzbergParser__ChunkMaxChars=2000
+      - KreuzbergParser__ChunkOverlap=200
+      - KreuzbergParser__EnableOcr=false
+      - KreuzbergParser__OcrBackend=tesseract
+      - KreuzbergParser__OcrLanguage=eng
+      - KreuzbergParser__EnableLanguageDetection=false
+      - KreuzbergParser__UseCache=true
+      - KreuzbergParser__EnableQualityProcessing=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      ollama-pull:
+        condition: service_completed_successfully
     networks:
       - app-network
 
@@ -81,10 +149,13 @@ services:
       dockerfile: AiService/AiService.Worker/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
       - Ollama__BaseUrl=http://ollama:11434
       - Ollama__Model=llama3
+      - Ollama__TimeoutSeconds=600
       - OpenAI__ApiKey=${DOCKER_REGISTRY}
       - OpenAI__Model=${DOCKER_REGISTRY-gpt-4.1-2025-04-14}
+      - Ollama__EmbeddingModel=nomic-embed-text
       - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
       rabbitmq:
@@ -108,16 +179,18 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_MULTIPLE_DATABASES: aichat,keycloak
+      POSTGRES_MULTIPLE_DATABASES: aichat,keycloak,documents
+      POSTGRES_PGSTORE_DATABASE: documents
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./Postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+      - ./Postgres/rag-schema.sql:/scripts/rag-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -190,7 +263,7 @@ services:
 
   ollama-pull:
     image: ollama/ollama:latest
-    entrypoint: ["/bin/sh", "-c", "ollama pull llama3"]
+    entrypoint: ["/bin/sh", "-c", "ollama pull llama3 && ollama pull nomic-embed-text"]
     environment:
       - OLLAMA_HOST=http://ollama:11434
     volumes:
@@ -201,10 +274,40 @@ services:
     networks:
       - app-network
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9002:9000"   # S3 API
+      - "9001:9001"   # MinIO console
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  minio-init:
+    image: minio/mc:latest
+    entrypoint: ["/bin/sh", "-c", "mc alias set local http://minio:9000 minioadmin minioadmin && mc mb local/documents --ignore-existing"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
   rabbitmq_data:
   ollama_data:
+  minio_data:
 
 networks:
   app-network:

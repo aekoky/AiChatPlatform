@@ -1,5 +1,5 @@
-using ChatService.Application.Dtos;
 using BuildingBlocks.Core;
+using ChatService.Application.Dtos;
 
 namespace ChatService.Application.Features.ListUserConversations;
 
