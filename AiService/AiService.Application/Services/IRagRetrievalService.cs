@@ -1,8 +1,10 @@
-﻿namespace AiService.Application.Services;
+using AiService.Application.Dtos;
+
+namespace AiService.Application.Services;
 
 public interface IRagRetrievalService
 {
-    Task<IReadOnlyList<string>> RetrieveAsync(
+    Task<IReadOnlyList<DocumentChunkDto>> RetrieveAsync(
         string query,
         Guid userId,
         Guid? sessionId,

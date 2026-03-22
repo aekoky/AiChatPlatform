@@ -63,7 +63,8 @@ public class ConversationSaga : Saga
             message.SessionId,
             message.UserId,
             message.FullResponse,
-            MessageRole.Assistant);
+            MessageRole.Assistant,
+            message.Sources);
 
         repository.Save(aiMessage);
         ActiveRequestId = null;
@@ -187,6 +188,7 @@ public class ConversationSaga : Saga
     {
         if (IsProcessing && ActiveRequestId.HasValue)
         {
+            await context.PublishAsync(new CancelLlmGenerationEvent(ActiveRequestId.Value));
             await context.PublishAsync(new LlmResponseGaveUpEvent(
                 ActiveRequestId.Value,
                 message.Id,

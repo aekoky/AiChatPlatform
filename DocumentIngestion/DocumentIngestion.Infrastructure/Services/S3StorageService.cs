@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Amazon.S3.Model;
 using DocumentIngestion.Application.Services;
 using DocumentIngestion.Infrastructure.Options;
@@ -14,13 +14,20 @@ public class S3StorageService(
 
     public async Task<Stream> DownloadAsync(string key, CancellationToken ct = default)
     {
-        var request = new GetObjectRequest
+        try
         {
-            BucketName = _bucket,
-            Key = key
-        };
+            var request = new GetObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key
+            };
 
-        var response = await s3Client.GetObjectAsync(request, ct);
-        return response.ResponseStream;
+            var response = await s3Client.GetObjectAsync(request, ct);
+            return response.ResponseStream;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new DocumentIngestion.Application.Exceptions.StorageException($"Failed to download {key} from S3.", ex);
+        }
     }
 }

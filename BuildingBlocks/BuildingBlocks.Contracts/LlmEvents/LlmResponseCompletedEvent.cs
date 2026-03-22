@@ -5,5 +5,6 @@ public record LlmResponseCompletedEvent(
     Guid SessionId,
     Guid UserId,
     string FullResponse,
-    int TokenCount
+    int TokenCount,
+    IReadOnlyList<string>? Sources = null
 );

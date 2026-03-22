@@ -11,7 +11,8 @@ namespace DocumentService.Api.Controllers;
 
 public record UploadDocumentRequest
 {
-    public IFormFile File { get; init; } = null!;
+    public IFormFile? File { get; init; }
+    public string? Url { get; init; }
     public string Scope { get; init; } = "user";
     public Guid? SessionId { get; init; }
 }
@@ -29,23 +30,47 @@ public class DocumentController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Upload(
         [FromForm] UploadDocumentRequest request,
+        [FromServices] IHttpClientFactory clientFactory,
         CancellationToken ct)
     {
-        if (request.File is null || request.File.Length == 0)
-            return BadRequest("File is required.");
+        if ((request.File is null || request.File.Length == 0) && string.IsNullOrWhiteSpace(request.Url))
+            return BadRequest("File or Url is required.");
+
+        Guid documentId = Guid.NewGuid();
+        Stream fileStream;
+        string fileName;
+        string contentType;
+
+        if (request.File is not null && request.File.Length > 0)
+        {
+            fileStream = request.File.OpenReadStream();
+            fileName = request.File.FileName;
+            contentType = request.File.ContentType;
+        }
+        else
+        {
+            var client = clientFactory.CreateClient();
+            var response = await client.GetAsync(request.Url, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (!response.IsSuccessStatusCode)
+                return BadRequest("Failed to download file from URL.");
+            
+            fileStream = await response.Content.ReadAsStreamAsync(ct);
+            fileName = Path.GetFileName(new Uri(request.Url!).AbsolutePath);
+            contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        }
 
         var command = new UploadDocumentCommand(
-            Id: Guid.NewGuid(),
+            Id: documentId,
             UserId: User.GetUserId(),
             SessionId: request.SessionId,
             Scope: request.Scope,
-            FileName: request.File.FileName,
-            ContentType: request.File.ContentType,
-            FileStream: request.File.OpenReadStream());
+            FileName: fileName,
+            ContentType: contentType,
+            FileStream: fileStream);
 
         await messageBus.InvokeAsync(command, ct);
 
-        return Accepted(new { command.Id });
+        return Accepted(new { Id = documentId });
     }
 
     [HttpGet]

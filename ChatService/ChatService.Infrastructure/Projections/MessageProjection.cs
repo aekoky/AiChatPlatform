@@ -17,7 +17,8 @@ public class MessageProjection : EventProjection
                 SenderId = e.SenderId,
                 Content = e.Content,
                 Role = e.Role,
-                SentAt = e.SentAt
+                SentAt = e.SentAt,
+                Sources = e.Sources
             });
         });
     }

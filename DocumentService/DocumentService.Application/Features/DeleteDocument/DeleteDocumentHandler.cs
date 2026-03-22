@@ -1,5 +1,5 @@
+using BuildingBlocks.Contracts.DocumentEvents;
 using DocumentService.Application.Services;
-using DocumentService.Contracts.Events;
 using Wolverine;
 
 namespace DocumentService.Application.Features.DeleteDocument;
@@ -18,8 +18,8 @@ public class DeleteDocumentHandler(
         if (document is null)
             return;
 
-        await storage.DeleteAsync(document.Id.ToString(), ct);
         await repository.DeleteAsync(command.Id, ct);
+        await storage.DeleteAsync(document.Id.ToString(), ct);
 
         await context.PublishAsync(new DocumentDeletedEvent(
             DocumentId: command.Id,

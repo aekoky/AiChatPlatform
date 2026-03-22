@@ -56,6 +56,16 @@ export class ChatComponent implements OnInit, OnDestroy {
         });
       });
 
+    this.notificationService.sources$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, sources }: { sessionId: string, sources: string[] }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.updateSources(sources);
+          }
+        });
+      });
+
     this.notificationService.completed$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(({ sessionId }: { sessionId: string }) => {

@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DocumentService.Application\DocumentService.Application.csproj" />
-    <ProjectReference Include="..\DocumentService.Contracts\DocumentService.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

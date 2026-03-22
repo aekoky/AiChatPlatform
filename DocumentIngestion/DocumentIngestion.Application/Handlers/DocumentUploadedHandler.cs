@@ -1,7 +1,7 @@
+using BuildingBlocks.Contracts.DocumentEvents;
 using BuildingBlocks.Contracts.ValueObjects;
 using DocumentIngestion.Application.Exceptions;
 using DocumentIngestion.Application.Services;
-using DocumentService.Contracts.Events;
 using Wolverine;
 
 namespace DocumentIngestion.Application.Handlers;
@@ -23,7 +23,7 @@ public class DocumentUploadedHandler(
             await using var stream = await storage.DownloadAsync(s3Key, ct);
 
             var chunks = await chunker.ParseAndChunkAsync(
-                stream, message.ContentType, message.DocumentId, ct);
+                stream, message.ContentType, message.FileName, message.DocumentId, ct);
 
             var embeddings = await embeddingService.EmbedAsync(
                 [.. chunks.Select(c => c.Content)], ct);
@@ -39,30 +39,33 @@ public class DocumentUploadedHandler(
                 UserId: message.UserId,
                 ChunkCount: chunks.Count));
         }
-        catch (InvalidDocumentFormatException ex)
+        catch (InvalidDocumentFormatException)
         {
             await context.PublishAsync(new DocumentIndexingFailedEvent(
                 DocumentId: message.DocumentId,
                 UserId: message.UserId,
                 Reason: DocumentFailedReasons.InvalidFormat));
         }
-        catch (DocumentParsingFailedException ex)
+        catch (DocumentParsingFailedException)
         {
             await context.PublishAsync(new DocumentIndexingFailedEvent(
                 DocumentId: message.DocumentId,
                 UserId: message.UserId,
                 Reason: DocumentFailedReasons.ParsingFailed));
         }
-        catch (Exception ex)
+        catch (StorageException)
         {
             await context.PublishAsync(new DocumentIndexingFailedEvent(
                 DocumentId: message.DocumentId,
                 UserId: message.UserId,
-                Reason: ex.Message.Contains("storage", StringComparison.OrdinalIgnoreCase)
-                        ? DocumentFailedReasons.StorageError
-                        : DocumentFailedReasons.Unknown));
-
-            throw; // Bubble up for Wolverine to trigger DLQ / Host retries natively
+                Reason: DocumentFailedReasons.StorageError));
+        }
+        catch (Exception)
+        {
+            await context.PublishAsync(new DocumentIndexingFailedEvent(
+                DocumentId: message.DocumentId,
+                UserId: message.UserId,
+                Reason: DocumentFailedReasons.Unknown));
         }
     }
 }

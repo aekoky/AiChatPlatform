@@ -12,10 +12,10 @@ public class SignalRNotificationService(IHubContext<ChatHub> hubContext) : INoti
             .SendAsync("ReceiveToken", new { requestId, sessionId, token }, ct);
 
     public async Task SendCompletedAsync(
-        Guid userId, Guid requestId, Guid sessionId, CancellationToken ct)
+        Guid userId, Guid requestId, Guid sessionId, IReadOnlyList<string>? sources, CancellationToken ct)
         => await hubContext.Clients
             .User(userId.ToString())
-            .SendAsync("ReceiveCompleted", new { requestId, sessionId }, ct);
+            .SendAsync("ReceiveCompleted", new { requestId, sessionId, sources }, ct);
 
     public async Task SendGaveUpAsync(Guid userId, Guid requestId, Guid sessionId, string reason, CancellationToken ct)
     => await hubContext.Clients

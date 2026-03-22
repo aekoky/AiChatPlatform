@@ -5,6 +5,7 @@ import { EMPTY, pipe } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Message } from '../models/message.model';
 import { ChatService } from '../core/api/chat.service';
+import { KeycloakService } from '../core/auth/keycloak.service';
 
 const GAVE_UP_MESSAGES: Record<string, string> = {
   'LLM_ERROR': 'The AI encountered an error. Please try again.',
@@ -18,11 +19,12 @@ export const MessageStore = signalStore(
   withState({
     messages: [] as Message[],
     streamingContent: null as string | null,
+    streamingSources: [] as string[],
     isStreaming: false,
     loading: false,
     error: null as string | null
   }),
-  withMethods((store, chatService = inject(ChatService)) => ({
+  withMethods((store, chatService = inject(ChatService), keycloak = inject(KeycloakService)) => ({
 
     loadMessages: rxMethod<string>(
       pipe(
@@ -39,12 +41,12 @@ export const MessageStore = signalStore(
 
     sendMessage: rxMethod<{ sessionId: string; content: string }>(
       pipe(
-        tap(({ content }) => {
+        tap(({ sessionId, content }) => {
           patchState(store, {
             messages: [...store.messages(), {
               id: crypto.randomUUID(),
-              sessionId: '',
-              senderId: '',
+              sessionId: sessionId,
+              senderId: keycloak.userId,
               version: 0,
               role: 0,
               content,
@@ -53,6 +55,7 @@ export const MessageStore = signalStore(
             }],
             isStreaming: true,
             streamingContent: '',
+            streamingSources: [],
             error: null
           });
         }),
@@ -73,21 +76,31 @@ export const MessageStore = signalStore(
       });
     },
 
+    updateSources(sources: string[]): void {
+      patchState(store, {
+        streamingSources: sources
+      });
+    },
+
     finalizeStream(): void {
       const content = store.streamingContent();
-      if (!content) return;
+      if (content === null) return;
+      const msgs = store.messages();
+      const lastSessionId = msgs.length > 0 ? msgs[msgs.length - 1].sessionId : '';
       patchState(store, {
-        messages: [...store.messages(), {
+        messages: [...msgs, {
           id: crypto.randomUUID(),
-          sessionId: '',
-          senderId: '',
+          sessionId: lastSessionId,
+          senderId: 'assistant',
           version:0,
           role: 1,
           content,
+          sources: store.streamingSources(),
           sentAt: new Date().toISOString(),
           isEdited: false
         }],
         streamingContent: null,
+        streamingSources: [],
         isStreaming: false
       });
     },

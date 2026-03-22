@@ -1,6 +1,6 @@
-﻿using Pgvector;
+using Pgvector;
 
-namespace DocumentIngestion.Application.Domain;
+namespace DocumentIngestion.Infrastructure.Persistence;
 
 public class DocumentChunkEntity
 {
@@ -12,5 +12,6 @@ public class DocumentChunkEntity
     public string Content { get; set; } = string.Empty;
     public Vector? Embedding { get; set; }
     public int ChunkIndex { get; set; }
+    public ChunkMetadataEntity? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
 }

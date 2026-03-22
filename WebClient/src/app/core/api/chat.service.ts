@@ -30,8 +30,8 @@ export class ChatService {
       .get<Message[]>(`${this.baseUrl}/api/Chat/conversation/${sessionId}/messages`);
   }
 
-  startChat(title: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/Chat/start`, { title });
+  startChat(title: string): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.baseUrl}/api/Chat/start`, { title });
   }
 
   sendMessage(sessionId: string, content: string): Observable<void> {

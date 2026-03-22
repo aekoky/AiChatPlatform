@@ -4,5 +4,5 @@ import { KeycloakService } from './keycloak.service';
 
 export const authGuard: CanActivateFn = () => {
   const keycloak = inject(KeycloakService);
-  return keycloak.getValidToken().then(() => true).catch(() => false);
+  return keycloak.getValidToken().then(token => !!token).catch(() => false);
 };

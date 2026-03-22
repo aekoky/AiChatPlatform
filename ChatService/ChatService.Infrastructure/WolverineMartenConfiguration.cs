@@ -11,6 +11,7 @@ using ChatService.Infrastructure.Projections;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Wolverine;
@@ -37,9 +38,9 @@ public static class WolverineMartenConfiguration
             opts.Events.AddEventType<SessionSummaryUpdatedEvent>();
             opts.Events.AddEventType<SessionTitleUpdatedEvent>();
 
-            // Async projections (handled by the Async Daemon to prevent write-blocking)
-            opts.Projections.Add<ConversationProjection>(ProjectionLifecycle.Async);
-            opts.Projections.Add<MessageProjection>(ProjectionLifecycle.Async);
+            // Inline projections (to prevent stale reads right after write)
+            opts.Projections.Add<ConversationProjection>(ProjectionLifecycle.Inline);
+            opts.Projections.Add<MessageProjection>(ProjectionLifecycle.Inline);
 
             return opts;
         })
@@ -59,10 +60,10 @@ public static class WolverineMartenConfiguration
         services.AddScoped<IReadOnlyEventStore, MartenReadOnlyEventStore>();
     }
 
-    public static void ConfigureWolverine(this WolverineOptions opts, IServiceCollection services)
+    public static void ConfigureWolverine(this WolverineOptions opts, IConfiguration configuration)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var rabbitOptions = serviceProvider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+        var rabbitOptions = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+            ?? throw new InvalidOperationException("RabbitMQ options are missing.");
 
         opts.Discovery.IncludeAssembly(typeof(StartChatCommand).Assembly);
         opts.Discovery.IncludeAssembly(typeof(ConversationSaga).Assembly);

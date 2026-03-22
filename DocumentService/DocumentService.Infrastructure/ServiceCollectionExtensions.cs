@@ -1,8 +1,8 @@
 using Amazon.Runtime;
 using Amazon.S3;
+using BuildingBlocks.Contracts.DocumentEvents;
 using DocumentService.Application.Features.UploadDocument;
 using DocumentService.Application.Services;
-using DocumentService.Contracts.Events;
 using DocumentService.Infrastructure.Options;
 using DocumentService.Infrastructure.Persistence;
 using DocumentService.Infrastructure.Repositories;
@@ -65,10 +65,10 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static void ConfigureWolverine(this WolverineOptions opts, IServiceCollection services)
+    public static void ConfigureWolverine(this WolverineOptions opts, Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var rabbitOptions = serviceProvider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+        var rabbitOptions = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+            ?? throw new InvalidOperationException("RabbitMQ options are missing.");
 
         opts.Discovery.IncludeAssembly(typeof(UploadDocumentCommand).Assembly);
         opts.Policies.AutoApplyTransactions();

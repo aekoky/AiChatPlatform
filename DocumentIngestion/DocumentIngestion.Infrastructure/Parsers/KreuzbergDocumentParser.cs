@@ -1,4 +1,4 @@
-﻿using DocumentIngestion.Application.Domain;
+using DocumentIngestion.Application.Domain;
 using DocumentIngestion.Application.Exceptions;
 using DocumentIngestion.Application.Services;
 using DocumentIngestion.Infrastructure.Options;
@@ -14,6 +14,7 @@ public class KreuzbergDocumentParser(IOptions<KreuzbergParserOptions> options) :
     public async Task<List<DocumentChunk>> ParseAndChunkAsync(
         Stream stream,
         string contentType,
+        string fileName,
         Guid documentId,
         CancellationToken ct = default)
     {
@@ -65,8 +66,14 @@ public class KreuzbergDocumentParser(IOptions<KreuzbergParserOptions> options) :
                 .Select(chunk => new DocumentChunk
                 {
                     DocumentId = documentId,
-                    Content = chunk.Content,
-                    ChunkIndex = chunk.Metadata.ChunkIndex
+                Content = chunk.Content,
+                    ChunkIndex = chunk.Metadata.ChunkIndex,
+                    Metadata = new DocumentChunkMetadata
+                    {
+                        FileName = fileName,
+                        SourceType = contentType,
+                        PageNumber = chunk.Metadata.FirstPage
+                    }
                 })];
         }
         catch (KreuzbergValidationException ex)
@@ -81,5 +88,5 @@ public class KreuzbergDocumentParser(IOptions<KreuzbergParserOptions> options) :
         {
             throw new DocumentParsingFailedException(ex.Message, ex);
         }
-    }
+    }    
 }

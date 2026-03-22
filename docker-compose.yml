@@ -37,13 +37,6 @@ services:
       dockerfile: ChatService/ChatService.Api/Dockerfile
     expose:
       - "8080"   # internal only — Kong routes to it
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Marten=Host=postgres;Port=5432;Database=aichat;Username=postgres;Password=postgres
-      - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
-      - Keycloak__Audience=aichat-web
-      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
-      - OpenApi__ServerUrl=http://localhost:8000/chat
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,18 +54,6 @@ services:
       dockerfile: DocumentService/DocumentService.Api/Dockerfile
     expose:
       - "8080"   # internal only — Kong routes to it
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
-      - S3__Endpoint=http://minio:9000
-      - S3__AccessKey=minioadmin
-      - S3__SecretKey=minioadmin
-      - S3__Bucket=documents
-      - S3__ForcePathStyle=true
-      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
-      - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
-      - Keycloak__Audience=aichat-web
-      - OpenApi__ServerUrl=http://localhost:8000/document
     depends_on:
       minio-init:
         condition: service_completed_successfully
@@ -90,26 +71,6 @@ services:
     build:
       context: .
       dockerfile: DocumentIngestion/DocumentIngestion.Worker/Dockerfile
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
-      - Ollama__BaseUrl=http://ollama:11434
-      - Ollama__EmbeddingModel=nomic-embed-text
-      - Ollama__TimeoutSeconds=600
-      - S3__Endpoint=http://minio:9000
-      - S3__AccessKey=minioadmin
-      - S3__SecretKey=minioadmin
-      - S3__Bucket=documents
-      - KreuzbergParser__EnableChunking=true
-      - KreuzbergParser__ChunkMaxChars=2000
-      - KreuzbergParser__ChunkOverlap=200
-      - KreuzbergParser__EnableOcr=false
-      - KreuzbergParser__OcrBackend=tesseract
-      - KreuzbergParser__OcrLanguage=eng
-      - KreuzbergParser__EnableLanguageDetection=false
-      - KreuzbergParser__UseCache=true
-      - KreuzbergParser__EnableQualityProcessing=true
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -129,11 +90,6 @@ services:
       dockerfile: NotificationService/NotificationService.Api/Dockerfile
     expose:
       - "8080"   # internal only — Kong routes to it
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Keycloak__Authority=http://host.docker.internal:8080/realms/aichat
-      - Keycloak__Audience=aichat-web
-      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
       keycloak:
         condition: service_healthy
@@ -147,16 +103,6 @@ services:
     build:
       context: .
       dockerfile: AiService/AiService.Worker/Dockerfile
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=documents;Username=postgres;Password=postgres
-      - Ollama__BaseUrl=http://ollama:11434
-      - Ollama__Model=llama3
-      - Ollama__TimeoutSeconds=600
-      - OpenAI__ApiKey=${DOCKER_REGISTRY}
-      - OpenAI__Model=${DOCKER_REGISTRY-gpt-4.1-2025-04-14}
-      - Ollama__EmbeddingModel=nomic-embed-text
-      - RabbitMQ__Uri=amqp://rabbitmq:LUUcvHJHv22GE7e@rabbitmq:5672
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -168,8 +114,8 @@ services:
   webclient:
     image: ${DOCKER_REGISTRY-}webclient
     build:
-     context: ./webclient
-     dockerfile: Dockerfile
+      context: ./WebClient
+      dockerfile: Dockerfile
     expose:
       - "3000"   # internal only — Kong routes to it, no direct host access
     depends_on:

@@ -9,7 +9,7 @@ public class MartenEventStoreRepository<TA>(IDocumentSession session) : IEventSt
     {
         try
         {
-            var eventStream = await session.Events.FetchForWriting<TA>(streamId, cancellationToken).ConfigureAwait(false);
+            var eventStream = await session.Events.FetchForWriting<TA>(streamId, expectedVersion, cancellationToken).ConfigureAwait(false);
             var aggregate = eventStream.Aggregate;
 
             aggregate?.Version = eventStream.CurrentVersion ?? 0;

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 
 namespace DocumentService.Api.Extensions;
 
@@ -19,10 +19,10 @@ public static class ClaimsPrincipalExtensions
                          ?? user.FindFirst("sub")?.Value;
 
         if (string.IsNullOrWhiteSpace(userIdString))
-            throw new InvalidOperationException("User ID claim is missing.");
+            throw new UnauthorizedAccessException("User ID claim is missing.");
 
         if (!Guid.TryParse(userIdString, out var userId))
-            throw new InvalidOperationException("User ID claim is not a valid GUID.");
+            throw new UnauthorizedAccessException("User ID claim is not a valid GUID.");
 
         return userId;
     }

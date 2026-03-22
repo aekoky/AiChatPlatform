@@ -1,4 +1,5 @@
-﻿using AiService.Application.Services;
+using AiService.Application.Dtos;
+using AiService.Application.Services;
 using AiService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -11,7 +12,7 @@ public class PgVectorRetrievalService(
     AiDbContext context,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator) : IRagRetrievalService
 {
-    public async Task<IReadOnlyList<string>> RetrieveAsync(
+    public async Task<IReadOnlyList<DocumentChunkDto>> RetrieveAsync(
         string query,
         Guid userId,
         Guid? sessionId,
@@ -27,9 +28,22 @@ public class PgVectorRetrievalService(
                 c.Scope == "global" ||
                 (c.Scope == "user" && c.UserId == userId) ||
                 (c.Scope == "session" && c.SessionId == sessionId))
-            .OrderBy(c => c.Embedding!.CosineDistance(vector))
+            .Select(c => new
+            {
+                Chunk = c,
+                Distance = c.Embedding!.CosineDistance(vector)
+            })
+            .OrderBy(x => x.Distance)
             .Take(topK)
-            .Select(c => c.Content)
+            .Select(x => new DocumentChunkDto
+            {
+                Content = x.Chunk.Content,
+                FileName = x.Chunk.Metadata != null ? x.Chunk.Metadata.FileName : null,
+                SourceType = x.Chunk.Metadata != null ? x.Chunk.Metadata.SourceType : null,
+                PageNumber = x.Chunk.Metadata != null ? x.Chunk.Metadata.PageNumber : null,
+                ChunkIndex = x.Chunk.ChunkIndex,
+                RelevanceScore = 1.0 - x.Distance
+            })
             .ToListAsync(ct);
     }
 }

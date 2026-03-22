@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Amazon.S3.Model;
 using DocumentService.Application.Services;
 using DocumentService.Infrastructure.Options;
@@ -18,26 +18,40 @@ public class S3StorageService(
         string contentType,
         CancellationToken ct = default)
     {
-        var request = new PutObjectRequest
+        try
         {
-            BucketName = _bucket,
-            Key = key,
-            InputStream = content,
-            ContentType = contentType,
-            AutoCloseStream = false
-        };
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
+                InputStream = content,
+                ContentType = contentType,
+                AutoCloseStream = false
+            };
 
-        await s3Client.PutObjectAsync(request, ct);
+            await s3Client.PutObjectAsync(request, ct);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new DocumentService.Application.Exceptions.StorageException($"Failed to upload {key} to S3.", ex);
+        }
     }
 
     public async Task DeleteAsync(string key, CancellationToken ct = default)
     {
-        var request = new DeleteObjectRequest
+        try
         {
-            BucketName = _bucket,
-            Key = key
-        };
+            var request = new DeleteObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key
+            };
 
-        await s3Client.DeleteObjectAsync(request, ct);
+            await s3Client.DeleteObjectAsync(request, ct);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new DocumentService.Application.Exceptions.StorageException($"Failed to delete {key} from S3.", ex);
+        }
     }
 }

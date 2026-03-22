@@ -11,12 +11,18 @@ export class NotificationService {
   private keycloak = inject(KeycloakService);
 
   private token$$ = new Subject<{requestId: string, sessionId: string, token: string}>();
+  private sources$$ = new Subject<{requestId: string, sessionId: string, sources: string[]}>();
   private completed$$ = new Subject<{requestId: string, sessionId: string}>();
   private gaveUp$$ = new Subject<{requestId: string, sessionId: string, reason: string}>();
+  private titleUpdated$$ = new Subject<{sessionId: string, title: string}>();
+  private summaryUpdated$$ = new Subject<{sessionId: string, summary: string}>();
 
   readonly token$ = this.token$$.asObservable();
+  readonly sources$ = this.sources$$.asObservable();
   readonly completed$ = this.completed$$.asObservable();
   readonly gaveUp$ = this.gaveUp$$.asObservable();
+  readonly titleUpdated$ = this.titleUpdated$$.asObservable();
+  readonly summaryUpdated$ = this.summaryUpdated$$.asObservable();
 
   connect(): void {
     this.connection = new HubConnectionBuilder()
@@ -34,8 +40,11 @@ export class NotificationService {
 
   private registerHandlers(): void {
     this.connection.off('ReceiveToken');
+    this.connection.off('ReceiveSources');
     this.connection.off('ReceiveCompleted');
     this.connection.off('ReceiveGaveUp');
+    this.connection.off('ReceiveTitleUpdated');
+    this.connection.off('ReceiveSummaryUpdated');
 
     this.connection.on('ReceiveToken', (data) => {
       console.log('[SignalR] ReceiveToken:', data);
@@ -43,6 +52,13 @@ export class NotificationService {
       const sessionId = data.sessionId ?? data.SessionId;
       const token = data.token ?? data.Token;
       this.token$$.next({ requestId, sessionId, token });
+    });
+    this.connection.on('ReceiveSources', (data) => {
+      console.log('[SignalR] ReceiveSources:', data);
+      const requestId = data.requestId ?? data.RequestId;
+      const sessionId = data.sessionId ?? data.SessionId;
+      const sources = data.sources ?? data.Sources;
+      this.sources$$.next({ requestId, sessionId, sources });
     });
     this.connection.on('ReceiveCompleted', (data) => {
       console.log('[SignalR] ReceiveCompleted:', data);
@@ -56,6 +72,18 @@ export class NotificationService {
       const sessionId = data.sessionId ?? data.SessionId;
       const reason = data.reason ?? data.Reason;
       this.gaveUp$$.next({ requestId, sessionId, reason });
+    });
+    this.connection.on('ReceiveTitleUpdated', (data) => {
+      console.log('[SignalR] ReceiveTitleUpdated:', data);
+      const sessionId = data.sessionId ?? data.SessionId;
+      const title = data.title ?? data.Title;
+      this.titleUpdated$$.next({ sessionId, title });
+    });
+    this.connection.on('ReceiveSummaryUpdated', (data) => {
+      console.log('[SignalR] ReceiveSummaryUpdated:', data);
+      const sessionId = data.sessionId ?? data.SessionId;
+      const summary = data.summary ?? data.Summary;
+      this.summaryUpdated$$.next({ sessionId, summary });
     });
   }
 

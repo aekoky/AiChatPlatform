@@ -1,6 +1,6 @@
+using BuildingBlocks.Contracts.DocumentEvents;
 using DocumentIngestion.Application.Handlers;
 using DocumentIngestion.Infrastructure;
-using DocumentService.Contracts.Events;
 using Wolverine;
 using Wolverine.RabbitMQ;
 

@@ -59,6 +59,8 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.Configure<AiPromptOptions>(configuration.GetSection(AiPromptOptions.SectionName));
+
         var connectionString = configuration.GetConnectionString("Postgres")
             ?? throw new InvalidOperationException("Postgres connection string is missing.");
 
@@ -84,6 +86,10 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRagRetrievalService, PgVectorRetrievalService>();
+        services.AddScoped<IRagQueryBuilder, RagQueryBuilder>();
+        services.AddScoped<IRagTool, RagTool>();
+        services.AddScoped<IPromptComposer, PromptComposer>();
+        services.AddScoped<ILlmGenerationService, LlmGenerationService>();
 
         return services;
     }

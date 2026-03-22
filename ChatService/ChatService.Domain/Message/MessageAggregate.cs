@@ -14,11 +14,13 @@ public class MessageAggregate : BaseAggregate
 
     public DateTime SentAt { get; private set; }
 
+    public IReadOnlyList<string> Sources { get; private set; } = [];
+
     public MessageAggregate()
     {
     }
 
-    public static MessageAggregate Create(Guid id, Guid sessionId, Guid senderId, string content, MessageRole role)
+    public static MessageAggregate Create(Guid id, Guid sessionId, Guid senderId, string content, MessageRole role, IReadOnlyList<string>? sources = null)
     {
         if (id == Guid.Empty) throw new DomainException("Message id cannot be empty.");
         if (senderId == Guid.Empty) throw new DomainException("Sender id cannot be empty.");
@@ -26,7 +28,7 @@ public class MessageAggregate : BaseAggregate
 
         var message = new MessageAggregate();
 
-        var @event = MessageCreatedEvent.Create(id, sessionId, senderId, content, role);
+        var @event = MessageCreatedEvent.Create(id, sessionId, senderId, content, role, sources);
         message.ApplyAndEnqueue(@event, e => message.Apply((MessageCreatedEvent)e));
 
         return message;
@@ -39,6 +41,7 @@ public class MessageAggregate : BaseAggregate
         Content = @event.Content;
         Role = @event.Role;
         SentAt = @event.SentAt;
+        Sources = @event.Sources;
 
         Version++;
     }

@@ -18,6 +18,5 @@
   <ItemGroup>
     <ProjectReference Include="..\DocumentIngestion.Application\DocumentIngestion.Application.csproj" />
     <ProjectReference Include="..\DocumentIngestion.Infrastructure\DocumentIngestion.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\DocumentService\DocumentService.Contracts\DocumentService.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -97,7 +97,7 @@ builder.Services.ConfigureWolverineMarten(martenDbConn);
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.ConfigureWolverine(builder.Services);
+    opts.ConfigureWolverine(builder.Configuration);
 });
 
 var app = builder.Build();

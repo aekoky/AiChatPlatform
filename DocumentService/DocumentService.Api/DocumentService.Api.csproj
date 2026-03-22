@@ -20,7 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\DocumentService.Application\DocumentService.Application.csproj" />
     <ProjectReference Include="..\DocumentService.Infrastructure\DocumentService.Infrastructure.csproj" />
-    <ProjectReference Include="..\DocumentService.Contracts\DocumentService.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

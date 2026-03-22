@@ -1,7 +1,7 @@
+using BuildingBlocks.Contracts.DocumentEvents;
 using DocumentService.Application.Domain;
 using DocumentService.Application.Services;
 using DocumentService.Application.ValueObjects;
-using DocumentService.Contracts.Events;
 using Wolverine;
 
 namespace DocumentService.Application.Features.UploadDocument;
@@ -15,6 +15,8 @@ public class UploadDocumentHandler(
         IMessageContext context,
         CancellationToken ct)
     {
+        await storage.UploadAsync(command.Id.ToString(), command.FileStream, command.ContentType, ct);
+
         await repository.CreateAsync(new Document
         {
             Id = command.Id,
@@ -27,7 +29,6 @@ public class UploadDocumentHandler(
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         }, ct);
-        await storage.UploadAsync(command.Id.ToString(), command.FileStream, command.ContentType, ct);
 
         await context.PublishAsync(new DocumentUploadedEvent(
             DocumentId: command.Id,

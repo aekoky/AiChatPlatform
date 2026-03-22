@@ -1,4 +1,4 @@
-﻿using Pgvector;
+using Pgvector;
 
 namespace AiService.Infrastructure.Persistence;
 
@@ -12,5 +12,6 @@ public class DocumentChunkEntity
     public string Content { get; set; } = string.Empty;
     public Vector? Embedding { get; set; }
     public int ChunkIndex { get; set; }
+    public DocumentChunkMetadata? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -4,8 +4,7 @@ using NotificationService.Application.Services;
 namespace NotificationService.Application.Commands;
 
 public class LlmTokensGeneratedHandler(
-    INotificationService notificationService,
-    IStreamBufferService streamBuffer)
+    INotificationService notificationService)
 {
     public async Task HandleAsync(
         LlmTokensGeneratedEvent message,
@@ -17,15 +16,5 @@ public class LlmTokensGeneratedHandler(
             message.SessionId,
             message.Token,
             ct);
-
-        if (streamBuffer.TokensDelivered(message.RequestId, message.TokenCount))
-        {
-            await notificationService.SendCompletedAsync(
-                message.UserId,
-                message.RequestId,
-                message.SessionId,
-                ct);
-            streamBuffer.Clear(message.RequestId);
-        }
     }
 }

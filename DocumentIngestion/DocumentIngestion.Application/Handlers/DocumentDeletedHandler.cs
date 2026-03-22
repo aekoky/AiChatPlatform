@@ -1,5 +1,5 @@
+using BuildingBlocks.Contracts.DocumentEvents;
 using DocumentIngestion.Application.Services;
-using DocumentService.Contracts.Events;
 
 namespace DocumentIngestion.Application.Handlers;
 

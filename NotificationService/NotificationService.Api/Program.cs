@@ -14,11 +14,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ChatHub>();
-builder.Services.AddSingleton<IStreamBufferService, StreamBufferService>();
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection(KeycloakOptions.SectionName));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
+
+var rabbitOptions = builder.Configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+    ?? throw new InvalidOperationException("RabbitMq options are missing.");
 
 var keycloakOptions = builder.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
     ?? throw new InvalidOperationException("Keycloak options are missing.");
@@ -46,9 +48,6 @@ builder.Services.AddAuthorization();
 
 builder.Host.UseWolverine(opts =>
 {
-    var serviceProvider = builder.Services.BuildServiceProvider();
-    var rabbitOptions = serviceProvider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
-
     opts.Discovery.IncludeAssembly(typeof(LlmTokensGeneratedHandler).Assembly);
     opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 

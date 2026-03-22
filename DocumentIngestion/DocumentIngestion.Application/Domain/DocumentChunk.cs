@@ -1,4 +1,4 @@
-﻿namespace DocumentIngestion.Application.Domain;
+namespace DocumentIngestion.Application.Domain;
 
 public class DocumentChunk
 {
@@ -10,5 +10,6 @@ public class DocumentChunk
     public string Content { get; set; } = string.Empty;
     public float[]? Embedding { get; set; }
     public int ChunkIndex { get; set; }
+    public DocumentChunkMetadata? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
 }

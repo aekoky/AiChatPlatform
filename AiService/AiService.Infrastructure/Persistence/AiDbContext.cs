@@ -25,6 +25,7 @@ public class AiDbContext(DbContextOptions<AiDbContext> options) : DbContext(opti
             entity.Property(e => e.Content).HasColumnName("content").IsRequired();
             entity.Property(e => e.Embedding).HasColumnName("embedding").HasColumnType("vector(768)");
             entity.Property(e => e.ChunkIndex).HasColumnName("chunk_index");
+            entity.Property(e => e.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
 
             entity.HasIndex(e => e.Embedding)
