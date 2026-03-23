@@ -1,4 +1,6 @@
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace AiService.Infrastructure.Persistence;
 
@@ -25,7 +27,9 @@ public class AiDbContext(DbContextOptions<AiDbContext> options) : DbContext(opti
             entity.Property(e => e.Content).HasColumnName("content").IsRequired();
             entity.Property(e => e.Embedding).HasColumnName("embedding").HasColumnType("vector(768)");
             entity.Property(e => e.ChunkIndex).HasColumnName("chunk_index");
-            entity.Property(e => e.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+            entity.Property(e => e.Metadata).HasColumnName("metadata").HasColumnType("jsonb").HasConversion(
+            v => v == null ? null : JsonSerializer.Serialize(v),
+            v => string.IsNullOrEmpty(v) ? null : JsonSerializer.Deserialize<DocumentChunkMetadata>(v));
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
 
             entity.HasIndex(e => e.Embedding)

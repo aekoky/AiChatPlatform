@@ -1,20 +1,20 @@
-﻿using BuildingBlocks.Contracts.LlmEvents;
+using BuildingBlocks.Contracts.LlmEvents;
 using NotificationService.Application.Services;
 
-namespace NotificationService.Application.Commands;
+namespace NotificationService.Application.Handlers;
 
-public class LlmTokensGeneratedHandler(
+public class LlmResponseCompletedHandler(
     INotificationService notificationService)
 {
     public async Task HandleAsync(
-        LlmTokensGeneratedEvent message,
+        LlmResponseCompletedEvent message,
         CancellationToken ct)
     {
-        await notificationService.SendTokenAsync(
+        await notificationService.SendCompletedAsync(
             message.UserId,
             message.RequestId,
             message.SessionId,
-            message.Token,
+            message.Sources,
             ct);
     }
 }

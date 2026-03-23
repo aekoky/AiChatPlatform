@@ -1,20 +1,20 @@
 ﻿using BuildingBlocks.Contracts.LlmEvents;
 using NotificationService.Application.Services;
 
-namespace NotificationService.Application.Commands;
+namespace NotificationService.Application.Handlers;
 
-public class LlmResponseGaveUpHandler(
+public class LlmTokensGeneratedHandler(
     INotificationService notificationService)
 {
     public async Task HandleAsync(
-        LlmResponseGaveUpEvent message,
+        LlmTokensGeneratedEvent message,
         CancellationToken ct)
     {
-        await notificationService.SendGaveUpAsync(
+        await notificationService.SendTokenAsync(
             message.UserId,
             message.RequestId,
             message.SessionId,
-            message.Reason,
+            message.Token,
             ct);
     }
 }

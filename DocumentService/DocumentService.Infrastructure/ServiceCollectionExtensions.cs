@@ -10,7 +10,6 @@ using DocumentService.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Wolverine;
 using Wolverine.RabbitMQ;
 
@@ -24,7 +23,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddEfCore(configuration);
         services.AddS3Storage(configuration);
-
+        services.AddHttpClient("UrlDocumentsClient");
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IStorageService, S3StorageService>();
 
@@ -53,6 +52,13 @@ public static class ServiceCollectionExtensions
         var s3Options = configuration.GetSection(S3Options.SectionName).Get<S3Options>()
             ?? throw new InvalidOperationException("S3 options are missing.");
 
+        if (string.IsNullOrWhiteSpace(s3Options.Endpoint) ||
+            string.IsNullOrWhiteSpace(s3Options.AccessKey) ||
+            string.IsNullOrWhiteSpace(s3Options.SecretKey))
+        {
+            throw new InvalidOperationException("S3 Endpoint, AccessKey, and SecretKey must all be configured.");
+        }
+
         var s3Config = new AmazonS3Config
         {
             ServiceURL = s3Options.Endpoint,
@@ -65,7 +71,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static void ConfigureWolverine(this WolverineOptions opts, Microsoft.Extensions.Configuration.IConfiguration configuration)
+    public static void ConfigureWolverine(this WolverineOptions opts, IConfiguration configuration)
     {
         var rabbitOptions = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
             ?? throw new InvalidOperationException("RabbitMQ options are missing.");

@@ -1,6 +1,6 @@
 using AiService.Application.Dtos;
 
-namespace AiService.Application.Services;
+namespace AiService.Infrastructure.Services;
 
 public interface IRagRetrievalService
 {

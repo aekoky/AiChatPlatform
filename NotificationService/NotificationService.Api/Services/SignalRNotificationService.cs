@@ -31,4 +31,14 @@ public class SignalRNotificationService(IHubContext<ChatHub> hubContext) : INoti
         => await hubContext.Clients
             .User(userId.ToString())
             .SendAsync("ReceiveSummaryUpdated", new { sessionId, newSummary }, ct);
+
+    public async Task SendRetryingAsync(Guid userId, Guid requestId, Guid sessionId, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveRetrying", new { requestId, sessionId }, ct);
+
+    public async Task SendSourcesAsync(Guid userId, Guid requestId, Guid sessionId, IReadOnlyList<string> sources, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveSources", new { requestId, sessionId, sources }, ct);
 }

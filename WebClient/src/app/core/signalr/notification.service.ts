@@ -16,6 +16,7 @@ export class NotificationService {
   private gaveUp$$ = new Subject<{requestId: string, sessionId: string, reason: string}>();
   private titleUpdated$$ = new Subject<{sessionId: string, title: string}>();
   private summaryUpdated$$ = new Subject<{sessionId: string, summary: string}>();
+  private retrying$$ = new Subject<{requestId: string, sessionId: string}>();
 
   readonly token$ = this.token$$.asObservable();
   readonly sources$ = this.sources$$.asObservable();
@@ -23,6 +24,7 @@ export class NotificationService {
   readonly gaveUp$ = this.gaveUp$$.asObservable();
   readonly titleUpdated$ = this.titleUpdated$$.asObservable();
   readonly summaryUpdated$ = this.summaryUpdated$$.asObservable();
+  readonly retrying$ = this.retrying$$.asObservable();
 
   connect(): void {
     this.connection = new HubConnectionBuilder()
@@ -31,7 +33,7 @@ export class NotificationService {
         // Force HTTP-based transports as Kong setup doesn't support WebSockets
         transport: HttpTransportType.LongPolling | HttpTransportType.ServerSentEvents
       })
-      .withAutomaticReconnect()
+      .withAutomaticReconnect([1000, 2000, 4000, 8000, 16000, 30000, 60000])
       .build();
 
     this.registerHandlers();
@@ -45,6 +47,7 @@ export class NotificationService {
     this.connection.off('ReceiveGaveUp');
     this.connection.off('ReceiveTitleUpdated');
     this.connection.off('ReceiveSummaryUpdated');
+    this.connection.off('ReceiveRetrying');
 
     this.connection.on('ReceiveToken', (data) => {
       console.log('[SignalR] ReceiveToken:', data);
@@ -84,6 +87,12 @@ export class NotificationService {
       const sessionId = data.sessionId ?? data.SessionId;
       const summary = data.summary ?? data.Summary;
       this.summaryUpdated$$.next({ sessionId, summary });
+    });
+    this.connection.on('ReceiveRetrying', (data) => {
+      console.log('[SignalR] ReceiveRetrying:', data);
+      const requestId = data.requestId ?? data.RequestId;
+      const sessionId = data.sessionId ?? data.SessionId;
+      this.retrying$$.next({ requestId, sessionId });
     });
   }
 

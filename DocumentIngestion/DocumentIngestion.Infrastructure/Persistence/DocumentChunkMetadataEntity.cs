@@ -1,6 +1,6 @@
 namespace DocumentIngestion.Infrastructure.Persistence;
 
-public class ChunkMetadataEntity
+public class DocumentChunkMetadataEntity
 {
     public string? FileName { get; set; }
     public string? SourceType { get; set; }

@@ -12,13 +12,14 @@ using ChatService.Domain.Session.Events;
 using ChatService.Domain.ValueObjects;
 using JasperFx.Core;
 using Wolverine;
+using Wolverine.Attributes;
 using Wolverine.Persistence.Sagas;
 
 namespace ChatService.Application.Sagas;
 
 // Scheduled via TimeoutMessage — fires if LLM never responds
 public record ConversationProcessingTimeout(Guid SessionId, Guid RequestId)
-    : TimeoutMessage(2.Minutes());
+    : TimeoutMessage(20.Minutes());
 
 public class ConversationSaga : Saga
 {
@@ -33,6 +34,7 @@ public class ConversationSaga : Saga
     public static ConversationSaga Start(SessionCreatedEvent e)
         => new() { Id = e.Id, UserId = e.UserId };
 
+    [Transactional]
     public async Task Handle(
         [SagaIdentityFrom(nameof(MessageCreatedEvent.SessionId))] MessageCreatedEvent message,
         IPromptBuilder promptBuilder,
@@ -111,10 +113,10 @@ public class ConversationSaga : Saga
                 : message.Summary;
 
             session.UpdateTitle(title);
-            await context.PublishAsync(new SessionTitleUpdatedNotificationEvent(Id, UserId, title));
+            await context.PublishAsync(new SessionTitleUpdatedNotificationEvent(message.RequestId, Id, UserId, title));
         }
 
-        await context.PublishAsync(new SessionSummaryUpdatedNotificationEvent(Id, UserId, message.Summary));
+        await context.PublishAsync(new SessionSummaryUpdatedNotificationEvent(message.RequestId, Id, UserId, message.Summary));
         repository.Save(session);
     }
 
@@ -122,14 +124,11 @@ public class ConversationSaga : Saga
     {
         var messages = await promptBuilder.BuildAsync(Id, ct);
 
-        // Map messages to Contracts DTOs for the AI service
-        var dtoMessages = messages.Select(m => new ChatTurn(m.Role, m.Content)).ToList();
-
         await context.PublishAsync(new SessionSummarizeRequestedEvent(
             Guid.NewGuid(),
             Id,
             UserId,
-            dtoMessages));
+            messages));
     }
 
     public async Task Handle(
@@ -180,7 +179,7 @@ public class ConversationSaga : Saga
     }
 
     // Required by Wolverine — handles timeout arriving after saga completes
-    public static void NotFound(ConversationProcessingTimeout timeout) { }
+    public static void NotFound(ConversationProcessingTimeout _) { }
 
     public async Task Handle(
         [SagaIdentityFrom(nameof(SessionDeletedEvent.Id))] SessionDeletedEvent message,

@@ -34,6 +34,18 @@ export const SessionStore = signalStore(
       patchState(store, { activeSessionId: sessionId });
     },
 
+    updateSessionTitle(sessionId: string, title: string): void {
+      patchState(store, {
+        sessions: store.sessions().map(s => s.id === sessionId ? { ...s, title } : s)
+      });
+    },
+
+    updateSessionSummary(sessionId: string, summary: string): void {
+      patchState(store, {
+        sessions: store.sessions().map(s => s.id === sessionId ? { ...s, summary } : s)
+      });
+    },
+
     startChat: rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true })),

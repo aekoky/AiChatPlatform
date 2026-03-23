@@ -22,6 +22,12 @@ builder.Services.AddDocumentInfrastructure(builder.Configuration);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+var postgresConn = builder.Configuration.GetConnectionString("Postgres") ?? "";
+var rabbitUri = builder.Configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()?.Uri ?? "";
+
+builder.Services.AddHealthChecks();
+
 // OpenAPI configuration with OAuth2 token support via Transformer
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi(options =>
@@ -120,5 +126,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

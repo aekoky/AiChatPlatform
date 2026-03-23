@@ -5,6 +5,7 @@ public record UploadDocumentCommand(
     Guid UserId,
     Guid? SessionId,
     string Scope,
-    string FileName,
-    string ContentType,
-    Stream FileStream);
+    Stream? File,
+    string? FileName,
+    string? ContentType,
+    string? Url);

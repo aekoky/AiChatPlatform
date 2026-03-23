@@ -66,7 +66,7 @@ public class KreuzbergDocumentParser(IOptions<KreuzbergParserOptions> options) :
                 .Select(chunk => new DocumentChunk
                 {
                     DocumentId = documentId,
-                Content = chunk.Content,
+                    Content = chunk.Content,
                     ChunkIndex = chunk.Metadata.ChunkIndex,
                     Metadata = new DocumentChunkMetadata
                     {

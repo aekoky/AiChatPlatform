@@ -95,6 +95,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var martenDbConn = builder.Configuration.GetConnectionString("Marten") ?? throw new InvalidOperationException("Marten ConnectionString is missing.");
 builder.Services.ConfigureWolverineMarten(martenDbConn);
 
+builder.Services.AddHealthChecks();
+
 builder.Host.UseWolverine(opts =>
 {
     opts.ConfigureWolverine(builder.Configuration);
@@ -125,5 +127,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

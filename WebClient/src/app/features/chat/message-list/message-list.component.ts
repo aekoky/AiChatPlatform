@@ -19,15 +19,31 @@ export class MessageListComponent {
 
   messageStore = inject(MessageStore);
 
+  private prevMessageCount = 0;
+
   constructor() {
-    // Scroll to bottom whenever messages or streaming content changes
+    // Scroll to bottom smartly: either it's a completely new message or user is already near bottom.
     effect(() => {
-      this.messageStore.messages();
+      const messages = this.messageStore.messages();
       this.messageStore.streamingContent();
       
-      // Delay slightly to allow the DOM to update
-      setTimeout(() => this.scrollToBottom(), 0);
+      const isNewMessage = messages.length !== this.prevMessageCount;
+      this.prevMessageCount = messages.length;
+
+      if (isNewMessage || this.isNearBottom()) {
+        // Delay slightly to allow the DOM to update
+        setTimeout(() => this.scrollToBottom(), 0);
+      }
     });
+  }
+
+  private isNearBottom(): boolean {
+    const list = this.scrollAnchor?.nativeElement?.parentElement;
+    if (!list) return true;
+    
+    // Within 150px of bottom is considered "near bottom"
+    const position = list.scrollTop + list.clientHeight;
+    return (list.scrollHeight - position) <= 150;
   }
 
   private scrollToBottom(): void {

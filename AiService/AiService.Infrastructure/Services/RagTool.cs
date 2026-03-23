@@ -1,5 +1,6 @@
 using AiService.Application.Dtos;
 using AiService.Application.Services;
+using AiService.Infrastructure.Extensions;
 using AiService.Infrastructure.Options;
 using BuildingBlocks.Contracts.Models;
 using Microsoft.Extensions.AI;
@@ -8,76 +9,88 @@ using Microsoft.Extensions.Options;
 namespace AiService.Infrastructure.Services;
 
 public class RagTool(
-    IChatClient chatClient, 
+    IChatClient chatClient,
     IRagRetrievalService retrievalService,
     IOptionsSnapshot<AiPromptOptions> options) : IRagTool
 {
-    private const double RelevanceThreshold = 0.5;
+    private const double RelevanceThreshold = 0.3;
 
-    public async Task<bool> ShouldInvokeAsync(IReadOnlyList<ChatTurn> messages, CancellationToken ct = default)
+    public async Task<bool> ShouldInvokeAsync(
+        IReadOnlyList<ChatTurn> messages,
+        CancellationToken ct = default)
     {
-        var recentHistory = messages
+        var latestUserMessage = messages.LastOrDefault(m => m.Role == "user");
+
+        if (latestUserMessage is null)
+            return false;
+
+        var chatMessages = new List<ChatMessage>
+        {
+            new(ChatRole.System, options.Value.RagDecisionPrompt),
+            new(ChatRole.User, latestUserMessage.Content)
+        };
+
+        var response = await chatClient.GetResponseAsync(chatMessages, ChatOptionsFactory.CreateDecisionOptions(), cancellationToken: ct);
+
+        return response.Text.Trim().StartsWith("YES", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public async Task<string> BuildQueryAsync(
+        IReadOnlyList<ChatTurn> messages,
+        CancellationToken ct = default)
+    {
+        var latestQuery = messages.LastOrDefault(m => m.Role == "user")?.Content
+            ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(latestQuery))
+            return latestQuery;
+
+        var history = messages
             .Where(m => m.Role == "user" || m.Role == "assistant")
-            .TakeLast(5)
+            .SkipLast(1)
+            .TakeLast(4)
             .ToList();
 
-        if (recentHistory.Count == 0 || recentHistory.Last().Role != "user")
-        {
-            return false; // Nothing to do if no user message
-        }
+        if (history.Count == 0)
+            return latestQuery;
 
-        var latestInput = recentHistory.Last().Content;
+        var chatMessages = new List<ChatMessage> { new(ChatRole.System, options.Value.RewritePrompt) };
+        chatMessages.AddRange(history.ToChatMessages());
+        chatMessages.Add(new(ChatRole.User, latestQuery));
 
-        var prompt = string.Format(options.Value.RagDecisionPrompt, latestInput);
-        
-        try
-        {
-            var response = await chatClient.GetResponseAsync(prompt, cancellationToken: ct);
-            var decision = response.Text?.Trim().ToLowerInvariant() ?? "";
-            
-            return decision.Contains("yes") || decision.Contains("true");
-        }
-        catch
-        {
-            // Default to yes if the fast check fails, so we don't accidentally block valid RAG requests.
-            return true;
-        }
+        var response = await chatClient.GetResponseAsync(chatMessages, ChatOptionsFactory.CreateRewriteOptions(), cancellationToken: ct);
+        var rewritten = response.Text?.Trim() ?? string.Empty;
+        return string.IsNullOrWhiteSpace(rewritten) ? latestQuery : rewritten;
     }
 
     public async Task<RagToolResult> ExecuteAsync(
-        string userQuery, 
-        Guid userId, 
-        Guid? sessionId, 
+        string userQuery,
+        Guid userId,
+        Guid? sessionId,
         CancellationToken ct = default)
     {
-        var retrievedChunks = await retrievalService.RetrieveAsync(userQuery, userId, sessionId, topK: 15, ct);
+        var chunks = await retrievalService.RetrieveAsync(userQuery, userId, sessionId, topK: 15, ct);
 
-        // Relevance Gate
-        var relevantChunks = retrievedChunks
+        var relevant = chunks
             .Where(c => c.RelevanceScore >= RelevanceThreshold)
             .DistinctBy(c => c.Content)
             .Take(5)
             .ToList();
 
-        if (relevantChunks.Count == 0)
-        {
-            return new RagToolResult(false, string.Empty, []);
-        }
+        if (relevant.Count == 0)
+            return RagToolResult.Empty;
 
-        var uniqueChunks = relevantChunks.Select(c => new
-        {
-            Chunk = c,
-            Source = $"{c.FileName ?? "Unknown"} | {(c.PageNumber.HasValue ? $"page {c.PageNumber}" : $"chunk {c.ChunkIndex}")}"
-        }).ToList();
+        var contextString = string.Join("\n\n", relevant.Select(c =>
+            string.IsNullOrWhiteSpace(c.FileName)
+                ? c.Content
+                : $"Source: {c.FileName}\n{c.Content}"));
 
-        var ragContext = string.Join("\n\n", uniqueChunks.Select(x => 
-            $"Source: {x.Source}\n{x.Chunk.Content}"));
-
-        var sourceReferences = uniqueChunks
-            .Select(x => x.Source)
+        var sourceReferences = relevant
+            .Select(c => c.FileName)
+            .Where(f => !string.IsNullOrWhiteSpace(f))
             .Distinct()
             .ToList();
 
-        return new RagToolResult(true, ragContext, sourceReferences);
+        return new RagToolResult(true, contextString, sourceReferences!);
     }
 }

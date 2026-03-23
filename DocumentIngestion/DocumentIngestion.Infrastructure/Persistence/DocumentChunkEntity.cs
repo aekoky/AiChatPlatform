@@ -12,6 +12,6 @@ public class DocumentChunkEntity
     public string Content { get; set; } = string.Empty;
     public Vector? Embedding { get; set; }
     public int ChunkIndex { get; set; }
-    public ChunkMetadataEntity? Metadata { get; set; }
+    public DocumentChunkMetadataEntity? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
 }

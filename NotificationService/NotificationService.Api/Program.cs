@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using NotificationService.Api;
 using NotificationService.Api.Options;
 using NotificationService.Api.Services;
-using NotificationService.Application.Commands;
+using NotificationService.Application.Handlers;
 using NotificationService.Application.Services;
 using Wolverine;
 using Wolverine.RabbitMQ;
@@ -24,6 +24,8 @@ var rabbitOptions = builder.Configuration.GetSection(RabbitMqOptions.SectionName
 
 var keycloakOptions = builder.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
     ?? throw new InvalidOperationException("Keycloak options are missing.");
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -51,7 +53,8 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(LlmTokensGeneratedHandler).Assembly);
     opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
-    opts.ListenToRabbitQueue("llm-tokens");
+    opts.ListenToRabbitQueue("llm-tokens").Sequential();
+    opts.ListenToRabbitQueue("llm-sources");
     opts.ListenToRabbitQueue("llm-retrying");
     opts.ListenToRabbitQueue("llm-completed.notificationservice");
     opts.ListenToRabbitQueue("llm-gave-up.notificationservice");
@@ -70,5 +73,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHealthChecks("/health");
 
 app.Run();

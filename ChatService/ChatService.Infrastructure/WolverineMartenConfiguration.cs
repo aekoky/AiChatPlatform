@@ -8,6 +8,8 @@ using ChatService.Domain.Session.Events;
 using ChatService.Infrastructure.EventStore;
 using ChatService.Infrastructure.Options;
 using ChatService.Infrastructure.Projections;
+using JasperFx;
+using JasperFx.Core;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
@@ -15,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Wolverine;
+using Wolverine.ErrorHandling;
 using Wolverine.Marten;
 using Wolverine.RabbitMQ;
 
@@ -69,6 +72,10 @@ public static class WolverineMartenConfiguration
         opts.Discovery.IncludeAssembly(typeof(ConversationSaga).Assembly);
         opts.Policies.AutoApplyTransactions();
         opts.Policies.UseDurableLocalQueues();
+        
+        // Handle pessimistic saga concurrency failures by jittering retries
+        opts.Policies.OnException<ConcurrencyException>()
+            .RetryWithCooldown(50.Milliseconds(), 100.Milliseconds(), 250.Milliseconds());
 
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
@@ -90,6 +97,9 @@ public static class WolverineMartenConfiguration
             .PreFetchCount(10);
 
         opts.ListenToRabbitQueue("llm-gave-up.chatservice")
+            .PreFetchCount(10);
+
+        opts.ListenToRabbitQueue("summary-tokens")
             .PreFetchCount(10);
     }
 }

@@ -1,5 +1,4 @@
 using AiService.Application.Dtos;
-using AiService.Application.Services;
 using AiService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;

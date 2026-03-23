@@ -1,18 +1,19 @@
 using BuildingBlocks.Contracts.Models;
+using BuildingBlocks.Core;
 using ChatService.Application.Dtos;
 using ChatService.Domain.ValueObjects;
 using Marten;
 
 namespace ChatService.Application.Services;
 
-public class PromptBuilder(IQuerySession session) : IPromptBuilder
+public class PromptBuilder(IReadOnlyEventStore readOnlyEventStore) : IPromptBuilder
 {
     public async Task<IReadOnlyList<ChatTurn>> BuildAsync(Guid sessionId, CancellationToken ct)
     {
-        var sessionDto = await session.Query<ConversationDto>()
+        var sessionDto = await readOnlyEventStore.Query<ConversationDto>()
             .FirstOrDefaultAsync(s => s.Id == sessionId, ct);
 
-        var messages = await session.Query<MessageDto>()
+        var messages = await readOnlyEventStore.Query<MessageDto>()
             .Where(m => m.SessionId == sessionId)
             .OrderByDescending(m => m.SentAt)
             .Take(20)
@@ -20,21 +21,15 @@ public class PromptBuilder(IQuerySession session) : IPromptBuilder
 
         var history = messages.Select(msg => new ChatTurn(
             msg.Role == MessageRole.User ? "user" : "assistant",
-            msg.Content));
+            msg.Content)).ToList();
 
-        var systemContent = "You are a helpful assistant.";
         if (sessionDto != null && !string.IsNullOrWhiteSpace(sessionDto.Summary))
         {
-            systemContent += $"\n\nBelow is a summary of the conversation context so far:\n{sessionDto.Summary}";
+            history.Add(new ChatTurn("system", $"\n\nConversation summary:\n{sessionDto.Summary}"));
         }
 
-        var result = new List<ChatTurn>
-        {
-            new("system", systemContent)
-        };
+        history.Reverse();
 
-        result.AddRange(history);
-
-        return result;
+        return history;
     }
 }

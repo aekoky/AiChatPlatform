@@ -1,7 +1,7 @@
 using BuildingBlocks.Contracts.SessionEvents;
 using NotificationService.Application.Services;
 
-namespace NotificationService.Application.Commands;
+namespace NotificationService.Application.Handlers;
 
 public class SessionTitleUpdatedNotificationHandler(INotificationService notifications)
 {

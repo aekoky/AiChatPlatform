@@ -1,7 +1,7 @@
 using AiService.Application.Services;
 using BuildingBlocks.Contracts.LlmEvents;
 
-namespace AiService.Application.Commands;
+namespace AiService.Application.Handlers;
 
 public class CancelLlmGenerationHandler(LlmCancellationRegistry registry)
 {

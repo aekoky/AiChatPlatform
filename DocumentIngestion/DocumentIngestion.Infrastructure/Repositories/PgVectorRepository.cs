@@ -24,7 +24,13 @@ public class PgVectorRepository(IngestionDbContext context) : IVectorStoreReposi
             Content = chunk.Content,
             Embedding = chunk.Embedding is not null ? new Vector(chunk.Embedding) : null,
             ChunkIndex = chunk.ChunkIndex,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Metadata = new DocumentChunkMetadataEntity
+            {
+                FileName = chunk.Metadata?.FileName,
+                PageNumber = chunk.Metadata?.PageNumber,
+                SourceType = chunk.Metadata?.SourceType
+            }
         }).ToList();
 
         await context.DocumentChunks.AddRangeAsync(entities, ct);

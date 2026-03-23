@@ -37,7 +37,6 @@ export class SessionListComponent {
 
   onSessionSelect(sessionId: string): void {
     this.sessionStore.setActiveSession(sessionId);
-    this.messageStore.loadMessages(sessionId);
   }
 
   openNewChatDialog(): void {

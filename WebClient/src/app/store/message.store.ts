@@ -28,7 +28,7 @@ export const MessageStore = signalStore(
 
     loadMessages: rxMethod<string>(
       pipe(
-        tap(() => patchState(store, { loading: true, error: null })),
+        tap(() => patchState(store, { messages: [], loading: true, error: null })),
         switchMap(sessionId => chatService.getMessages(sessionId).pipe(
           tap(messages => patchState(store, { messages, loading: false })),
           catchError(err => {
@@ -110,6 +110,13 @@ export const MessageStore = signalStore(
         streamingContent: null,
         isStreaming: false,
         error: GAVE_UP_MESSAGES[reason] ?? 'An unknown error occurred. Please try again.'
+      });
+    },
+
+    handleRetrying(): void {
+      patchState(store, {
+        streamingContent: '*(Optimistic concurrency conflict detected. Retrying AI generation...)*\n\n',
+        streamingSources: []
       });
     }
   }))

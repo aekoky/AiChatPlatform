@@ -38,6 +38,11 @@
       "durable": true
     },
     {
+      "name": "llm-sources",
+      "vhost": "/",
+      "durable": true
+    },
+    {
       "name": "llm-retrying",
       "vhost": "/",
       "durable": true
@@ -84,6 +89,11 @@
     },
     {
       "name": "session-notifications",
+      "vhost": "/",
+      "durable": true
+    },
+    {
+      "name": "summary-tokens",
       "vhost": "/",
       "durable": true
     }

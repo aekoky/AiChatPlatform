@@ -1,4 +1,4 @@
-using AiService.Application.Commands;
+using AiService.Application.Handlers;
 using AiService.Application.Services;
 using AiService.Infrastructure.Options;
 using AiService.Infrastructure.Persistence;
@@ -86,10 +86,8 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRagRetrievalService, PgVectorRetrievalService>();
-        services.AddScoped<IRagQueryBuilder, RagQueryBuilder>();
         services.AddScoped<IRagTool, RagTool>();
-        services.AddScoped<IPromptComposer, PromptComposer>();
-        services.AddScoped<ILlmGenerationService, LlmGenerationService>();
+        services.AddScoped<ILlmService, OllamaLlmService>();
 
         return services;
     }
@@ -108,17 +106,21 @@ public static class ServiceCollectionExtensions
 
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
-        opts.ListenToRabbitQueue("llm-requests")
-            .Sequential();
+        opts.ListenToRabbitQueue("llm-requests");
 
         opts.ListenToRabbitQueue("llm-summarization")
             .Sequential();
 
         opts.PublishMessage<LlmTokensGeneratedEvent>()
-            .ToRabbitExchange("llm-completed");
+            .ToRabbitQueue("llm-tokens")
+            .SendInline(); // Stream immediately, do not wait for the outbox to clear
+
+        opts.PublishMessage<LlmSourcesFoundEvent>()
+            .ToRabbitQueue("llm-sources");
 
         opts.PublishMessage<LlmResponseRetryingEvent>()
-            .ToRabbitQueue("llm-retrying");
+            .ToRabbitQueue("llm-retrying")
+            .SendInline();
 
         opts.PublishMessage<SessionSummaryGeneratedEvent>()
             .ToRabbitQueue("summary-tokens");

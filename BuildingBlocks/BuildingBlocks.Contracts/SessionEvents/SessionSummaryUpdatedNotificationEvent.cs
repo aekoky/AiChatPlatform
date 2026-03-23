@@ -1,3 +1,3 @@
 namespace BuildingBlocks.Contracts.SessionEvents;
 
-public record SessionSummaryUpdatedNotificationEvent(Guid SessionId, Guid UserId, string NewSummary);
+public record SessionSummaryUpdatedNotificationEvent(Guid RequestId, Guid SessionId, Guid UserId, string NewSummary);

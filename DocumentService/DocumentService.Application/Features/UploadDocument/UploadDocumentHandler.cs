@@ -8,14 +8,37 @@ namespace DocumentService.Application.Features.UploadDocument;
 
 public class UploadDocumentHandler(
     IDocumentRepository repository,
-    IStorageService storage)
+    IStorageService storage,
+    IHttpClientFactory clientFactory)
 {
     public async Task Handle(
         UploadDocumentCommand command,
         IMessageContext context,
         CancellationToken ct)
     {
-        await storage.UploadAsync(command.Id.ToString(), command.FileStream, command.ContentType, ct);
+        Stream fileStream;
+        string fileName;
+        string contentType;
+
+        if (command.File is not null && command.File.Length > 0)
+        {
+            fileStream = command.File;
+            fileName = command!.FileName ?? string.Empty;
+            contentType = command!.ContentType ?? string.Empty;
+        }
+        else
+        {
+            var client = clientFactory.CreateClient("UrlDocumentsClient");
+            var response = await client.GetAsync(command.Url, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (!response.IsSuccessStatusCode)
+                throw new ApplicationException("Failed to download file from URL.");
+
+            fileStream = await response.Content.ReadAsStreamAsync(ct);
+            fileName = Path.GetFileName(new Uri(command.Url!).AbsolutePath);
+            contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        }
+
+        await storage.UploadAsync(command.Id.ToString(), fileStream, contentType, ct);
 
         await repository.CreateAsync(new Document
         {
@@ -23,8 +46,8 @@ public class UploadDocumentHandler(
             UserId = command.UserId,
             SessionId = command.SessionId,
             Scope = command.Scope,
-            FileName = command.FileName,
-            ContentType = command.ContentType,
+            FileName = fileName,
+            ContentType = contentType,
             Status = DocumentStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -35,7 +58,7 @@ public class UploadDocumentHandler(
             UserId: command.UserId,
             SessionId: command.SessionId,
             Scope: command.Scope,
-            FileName: command.FileName,
-            ContentType: command.ContentType));
+            FileName: fileName,
+            ContentType: contentType));
     }
 }
