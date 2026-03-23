@@ -4,6 +4,6 @@
     "realm": "aichat",
     "clientId": "aichat-web"
   },
-  "chatApiUrl": "http://localhost:8000",
+  "chatApiUrl": "http://localhost:8000/chat",
   "notificationUrl": "http://localhost:8000"
 }

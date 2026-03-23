@@ -17,4 +17,6 @@ public record MessageDto
     public DateTime SentAt { get; init; }
 
     public long Version { get; init; }
+
+    public IReadOnlyList<string> Sources { get; init; } = [];
 }

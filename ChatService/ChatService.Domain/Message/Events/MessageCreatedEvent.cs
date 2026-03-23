@@ -1,4 +1,4 @@
-﻿using BuildingBlocks.Core;
+using BuildingBlocks.Core;
 using ChatService.Domain.ValueObjects;
 
 namespace ChatService.Domain.Message.Events;
@@ -19,7 +19,9 @@ public record MessageCreatedEvent : BaseEvent
 
     public DateTime SentAt { get; private set; }
 
-    public static MessageCreatedEvent Create(Guid id, Guid sessionId, Guid senderId, string content, MessageRole role)
+    public IReadOnlyList<string> Sources { get; private set; } = [];
+
+    public static MessageCreatedEvent Create(Guid id, Guid sessionId, Guid senderId, string content, MessageRole role, IReadOnlyList<string>? sources = null)
     {
         if (id == Guid.Empty) throw new DomainException("Message id cannot be empty.");
         if (sessionId == Guid.Empty) throw new DomainException("Session id cannot be empty.");
@@ -33,7 +35,8 @@ public record MessageCreatedEvent : BaseEvent
             Content = content,
             Role = role,
             SentAt = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Sources = sources ?? []
         };
     }
 }

@@ -1,4 +1,5 @@
-using BuildingBlocks.Contracts.Events;
+using BuildingBlocks.Contracts.LlmEvents;
+using BuildingBlocks.Contracts.SessionEvents;
 using BuildingBlocks.Core;
 using ChatService.Application.Features.StartChat;
 using ChatService.Application.Sagas;
@@ -7,12 +8,16 @@ using ChatService.Domain.Session.Events;
 using ChatService.Infrastructure.EventStore;
 using ChatService.Infrastructure.Options;
 using ChatService.Infrastructure.Projections;
+using JasperFx;
+using JasperFx.Core;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Wolverine;
+using Wolverine.ErrorHandling;
 using Wolverine.Marten;
 using Wolverine.RabbitMQ;
 
@@ -33,8 +38,10 @@ public static class WolverineMartenConfiguration
             opts.Events.AddEventType<MessageCreatedEvent>();
             opts.Events.AddEventType<SessionUpdatedEvent>();
             opts.Events.AddEventType<SessionDeletedEvent>();
+            opts.Events.AddEventType<SessionSummaryUpdatedEvent>();
+            opts.Events.AddEventType<SessionTitleUpdatedEvent>();
 
-            // Inline projections (synchronous, no daemon needed)
+            // Inline projections (to prevent stale reads right after write)
             opts.Projections.Add<ConversationProjection>(ProjectionLifecycle.Inline);
             opts.Projections.Add<MessageProjection>(ProjectionLifecycle.Inline);
 
@@ -56,15 +63,19 @@ public static class WolverineMartenConfiguration
         services.AddScoped<IReadOnlyEventStore, MartenReadOnlyEventStore>();
     }
 
-    public static void ConfigureWolverine(this WolverineOptions opts, IServiceCollection services)
+    public static void ConfigureWolverine(this WolverineOptions opts, IConfiguration configuration)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var rabbitOptions = serviceProvider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+        var rabbitOptions = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+            ?? throw new InvalidOperationException("RabbitMQ options are missing.");
 
         opts.Discovery.IncludeAssembly(typeof(StartChatCommand).Assembly);
         opts.Discovery.IncludeAssembly(typeof(ConversationSaga).Assembly);
         opts.Policies.AutoApplyTransactions();
         opts.Policies.UseDurableLocalQueues();
+        
+        // Handle pessimistic saga concurrency failures by jittering retries
+        opts.Policies.OnException<ConcurrencyException>()
+            .RetryWithCooldown(50.Milliseconds(), 100.Milliseconds(), 250.Milliseconds());
 
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
@@ -72,11 +83,23 @@ public static class WolverineMartenConfiguration
         opts.PublishMessage<LlmResponseRequestedEvent>()
             .ToRabbitQueue("llm-requests");
 
+        opts.PublishMessage<SessionSummarizeRequestedEvent>()
+            .ToRabbitQueue("llm-summarization");
+
+        opts.PublishMessage<SessionTitleUpdatedNotificationEvent>()
+            .ToRabbitExchange("session-notifications");
+
+        opts.PublishMessage<SessionSummaryUpdatedNotificationEvent>()
+            .ToRabbitExchange("session-notifications");
+
         // AiService → ChatService: receive completed response, route to saga
         opts.ListenToRabbitQueue("llm-completed.chatservice")
             .PreFetchCount(10);
 
         opts.ListenToRabbitQueue("llm-gave-up.chatservice")
+            .PreFetchCount(10);
+
+        opts.ListenToRabbitQueue("summary-tokens")
             .PreFetchCount(10);
     }
 }

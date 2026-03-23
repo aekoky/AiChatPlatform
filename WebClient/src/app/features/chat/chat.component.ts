@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, inject, NgZone, OnDestroy, OnInit
+  ChangeDetectionStrategy, Component, DestroyRef, inject, NgZone, OnDestroy, OnInit, effect, untracked
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -42,6 +42,15 @@ export class ChatComponent implements OnInit, OnDestroy {
   private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
 
+  constructor() {
+    effect(() => {
+      const sessionId = this.sessionStore.activeSessionId();
+      if (sessionId) {
+        untracked(() => this.messageStore.loadMessages(sessionId));
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.sessionStore.loadSessions();
     this.notificationService.connect();
@@ -52,6 +61,16 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.ngZone.run(() => {
           if (sessionId === this.sessionStore.activeSessionId()) {
             this.messageStore.appendToken(token);
+          }
+        });
+      });
+
+    this.notificationService.sources$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, sources }: { sessionId: string, sources: string[] }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.updateSources(sources);
           }
         });
       });
@@ -72,6 +91,32 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.ngZone.run(() => {
           if (sessionId === this.sessionStore.activeSessionId()) {
             this.messageStore.handleGaveUp(reason);
+          }
+        });
+      });
+
+    this.notificationService.titleUpdated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, title }: { sessionId: string, title: string }) => {
+        this.ngZone.run(() => {
+          this.sessionStore.updateSessionTitle(sessionId, title);
+        });
+      });
+
+    this.notificationService.summaryUpdated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId, summary }: { sessionId: string, summary: string }) => {
+        this.ngZone.run(() => {
+          this.sessionStore.updateSessionSummary(sessionId, summary);
+        });
+      });
+
+    this.notificationService.retrying$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ sessionId }: { sessionId: string }) => {
+        this.ngZone.run(() => {
+          if (sessionId === this.sessionStore.activeSessionId()) {
+            this.messageStore.handleRetrying();
           }
         });
       });

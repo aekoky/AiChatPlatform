@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using NotificationService.Api;
+using NotificationService.Api.Options;
 using NotificationService.Api.Services;
-using NotificationService.Application.Commands;
+using NotificationService.Application.Handlers;
 using NotificationService.Application.Services;
 using Wolverine;
 using Wolverine.RabbitMQ;
@@ -12,14 +14,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ChatHub>();
-builder.Services.AddSingleton<IStreamBufferService, StreamBufferService>();
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
+
+builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection(KeycloakOptions.SectionName));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
+
+var rabbitOptions = builder.Configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+    ?? throw new InvalidOperationException("RabbitMq options are missing.");
+
+var keycloakOptions = builder.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
+    ?? throw new InvalidOperationException("Keycloak options are missing.");
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = builder.Configuration["Keycloak:Authority"];
-        options.Audience = builder.Configuration["Keycloak:Audience"];
+        options.Authority = keycloakOptions.Authority;
+        options.Audience = keycloakOptions.Audience;
         options.RequireHttpsMetadata = false; // set to true in production
         options.Events = new JwtBearerEvents
         {
@@ -36,16 +48,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// 3. Wolverine with RabbitMQ
 builder.Host.UseWolverine(opts =>
 {
-    opts.Discovery.IncludeAssembly(typeof(LlmTokenGeneratedHandler).Assembly);
-    opts.UseRabbitMq(new Uri(builder.Configuration["RabbitMQ:Uri"]!));
+    opts.Discovery.IncludeAssembly(typeof(LlmTokensGeneratedHandler).Assembly);
+    opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
-    opts.ListenToRabbitQueue("llm-tokens");
+    opts.ListenToRabbitQueue("llm-tokens").Sequential();
+    opts.ListenToRabbitQueue("llm-sources");
     opts.ListenToRabbitQueue("llm-retrying");
     opts.ListenToRabbitQueue("llm-completed.notificationservice");
     opts.ListenToRabbitQueue("llm-gave-up.notificationservice");
+    opts.ListenToRabbitQueue("session-notifications");
 });
 
 
@@ -60,5 +73,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHealthChecks("/health");
 
 app.Run();

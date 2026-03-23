@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using NotificationService.Application.Services;
 
 namespace NotificationService.Api.Services;
@@ -12,13 +12,33 @@ public class SignalRNotificationService(IHubContext<ChatHub> hubContext) : INoti
             .SendAsync("ReceiveToken", new { requestId, sessionId, token }, ct);
 
     public async Task SendCompletedAsync(
-        Guid userId, Guid requestId, Guid sessionId, CancellationToken ct)
+        Guid userId, Guid requestId, Guid sessionId, IReadOnlyList<string>? sources, CancellationToken ct)
         => await hubContext.Clients
             .User(userId.ToString())
-            .SendAsync("ReceiveCompleted", new { requestId, sessionId }, ct);
+            .SendAsync("ReceiveCompleted", new { requestId, sessionId, sources }, ct);
 
     public async Task SendGaveUpAsync(Guid userId, Guid requestId, Guid sessionId, string reason, CancellationToken ct)
     => await hubContext.Clients
         .User(userId.ToString())
         .SendAsync("ReceiveGaveUp", new { requestId, sessionId, reason }, ct);
+
+    public async Task SendTitleUpdatedAsync(Guid userId, Guid sessionId, string newTitle, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveTitleUpdated", new { sessionId, newTitle }, ct);
+
+    public async Task SendSummaryUpdatedAsync(Guid userId, Guid sessionId, string newSummary, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveSummaryUpdated", new { sessionId, newSummary }, ct);
+
+    public async Task SendRetryingAsync(Guid userId, Guid requestId, Guid sessionId, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveRetrying", new { requestId, sessionId }, ct);
+
+    public async Task SendSourcesAsync(Guid userId, Guid requestId, Guid sessionId, IReadOnlyList<string> sources, CancellationToken ct)
+        => await hubContext.Clients
+            .User(userId.ToString())
+            .SendAsync("ReceiveSources", new { requestId, sessionId, sources }, ct);
 }

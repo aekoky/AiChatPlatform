@@ -14,6 +14,7 @@ public class SessionAggregate : BaseAggregate
     public DateTime LastActivityAt { get; private set; }
 
     public DateTime? DeletedAt { get; private set; }
+    public string Summary { get; private set; } = string.Empty;
 
     public SessionAggregate()
     {
@@ -42,11 +43,31 @@ public class SessionAggregate : BaseAggregate
         ApplyAndEnqueue(@event, e => Apply((SessionUpdatedEvent)e));
     }
 
+    public void UpdateTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) throw new DomainException("Title cannot be empty.");
+
+        // For simplicity, we'll use a new event or just reuse SessionCreated's property logic
+        // But a specific event is cleaner for Marten
+        var @event = new SessionTitleUpdatedEvent(Id, title);
+
+        ApplyAndEnqueue(@event, e => Apply((SessionTitleUpdatedEvent)e));
+    }
+
     public void Delete()
     {
         var @event = new SessionDeletedEvent(Id);
 
         ApplyAndEnqueue(@event, e => Apply((SessionDeletedEvent)e));
+    }
+
+    public void UpdateSummary(string summary)
+    {
+        if (string.IsNullOrWhiteSpace(summary)) throw new DomainException("Summary cannot be empty.");
+
+        var @event = new SessionSummaryUpdatedEvent(Id, summary);
+
+        ApplyAndEnqueue(@event, e => Apply((SessionSummaryUpdatedEvent)e));
     }
 
     private void Apply(SessionCreatedEvent @event)
@@ -71,6 +92,22 @@ public class SessionAggregate : BaseAggregate
     {
         LastActivityAt = DateTime.UtcNow;
         DeletedAt = DateTime.UtcNow;
+
+        Version++;
+    }
+
+    private void Apply(SessionSummaryUpdatedEvent @event)
+    {
+        Summary = @event.Summary;
+        LastActivityAt = @event.UpdatedAt;
+
+        Version++;
+    }
+
+    private void Apply(SessionTitleUpdatedEvent @event)
+    {
+        Title = @event.Title;
+        LastActivityAt = DateTime.UtcNow;
 
         Version++;
     }

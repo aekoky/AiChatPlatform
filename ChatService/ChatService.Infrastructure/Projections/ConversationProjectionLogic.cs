@@ -14,7 +14,30 @@ public static class ConversationProjectionLogic
             UserId = @event.UserId,
             Title = @event.Title,
             StartedAt = @event.StartedAt,
-            LastActivityAt = @event.LastActivityAt
+            LastActivityAt = @event.LastActivityAt,
+            Summary = string.Empty
+        };
+    }
+
+    public static ConversationDto? Handle(SessionSummaryUpdatedEvent @event, ConversationDto? current)
+    {
+        if (current is null) return null;
+
+        return current with
+        {
+            Summary = @event.Summary,
+            LastActivityAt = @event.UpdatedAt
+        };
+    }
+
+    public static ConversationDto? Handle(SessionTitleUpdatedEvent @event, ConversationDto? current)
+    {
+        if (current is null) return null;
+
+        return current with
+        {
+            Title = @event.Title,
+            LastActivityAt = DateTime.UtcNow
         };
     }
 

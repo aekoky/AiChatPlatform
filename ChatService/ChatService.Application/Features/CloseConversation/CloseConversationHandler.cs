@@ -1,7 +1,5 @@
 using BuildingBlocks.Core;
 using ChatService.Domain.Session;
-using System.Collections;
-using Wolverine;
 
 namespace ChatService.Application.Features.CloseConversation;
 

@@ -34,22 +34,30 @@ export const SessionStore = signalStore(
       patchState(store, { activeSessionId: sessionId });
     },
 
+    updateSessionTitle(sessionId: string, title: string): void {
+      patchState(store, {
+        sessions: store.sessions().map(s => s.id === sessionId ? { ...s, title } : s)
+      });
+    },
+
+    updateSessionSummary(sessionId: string, summary: string): void {
+      patchState(store, {
+        sessions: store.sessions().map(s => s.id === sessionId ? { ...s, summary } : s)
+      });
+    },
+
     startChat: rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true })),
         switchMap(title => chatService.startChat(title).pipe(
-          switchMap(() => chatService.getConversations()),
-          tap(sessions => {
-            patchState(store, { sessions, loading: false });
-            // Find the most recently created session with this title and set it active
-            const newSession = [...sessions]
-              .filter(s => s.title === title)
-              .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())[0];
-
-            if (newSession) {
-              patchState(store, { activeSessionId: newSession.id });
-            }
-          }),
+          switchMap(({ id }) => chatService.getConversations().pipe(
+            tap(sessions => {
+              patchState(store, { sessions, loading: false });
+              if (id) {
+                patchState(store, { activeSessionId: id });
+              }
+            })
+          )),
           catchError(err => {
             patchState(store, { error: err.message, loading: false });
             return EMPTY;

@@ -23,6 +23,15 @@
       <mat-card class="message-bubble" [class.user-bubble]="message.role === 0" [class.assistant-bubble]="message.role === 1">
         <mat-card-content>
           <p class="message-content">{{ message.content }}</p>
+          @if (message.sources && message.sources.length > 0) {
+            <div class="message-sources">
+              @for (source of message.sources; track source) {
+                <span class="source-badge">
+                  <mat-icon inline="true">menu_book</mat-icon> {{ source }}
+                </span>
+              }
+            </div>
+          }
           <span class="message-time">{{ message.sentAt | date:'shortTime' }}</span>
         </mat-card-content>
       </mat-card>
@@ -46,6 +55,15 @@
           } @else {
             <p class="message-content">{{ messageStore.streamingContent() }}</p>
             <span class="cursor-blink">▋</span>
+            @if (messageStore.streamingSources() && messageStore.streamingSources().length > 0) {
+              <div class="message-sources" style="margin-top: 10px;">
+                @for (source of messageStore.streamingSources(); track source) {
+                  <span class="source-badge">
+                    <mat-icon inline="true">menu_book</mat-icon> {{ source }}
+                  </span>
+                }
+              </div>
+            }
           }
         </mat-card-content>
       </mat-card>

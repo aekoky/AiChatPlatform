@@ -1,10 +1,72 @@
 services:
   chatserviceapi:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Marten=${ConnectionStrings__Marten}
+      - Keycloak__Authority=${Keycloak__Authority}
+      - Keycloak__Audience=${Keycloak__Audience}
+      - RabbitMQ__Uri=${RabbitMQ__Uri}
+      - OpenApi__ServerUrl=http://localhost:8000/chat
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  documentserviceapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Postgres=${ConnectionStrings__Postgres}
+      - S3__Endpoint=${S3__Endpoint}
+      - S3__AccessKey=${S3__AccessKey}
+      - S3__SecretKey=${S3__SecretKey}
+      - S3__Bucket=${S3__Bucket}
+      - S3__ForcePathStyle=${S3__ForcePathStyle}
+      - RabbitMQ__Uri=${RabbitMQ__Uri}
+      - Keycloak__Authority=${Keycloak__Authority}
+      - Keycloak__Audience=${Keycloak__Audience}
+      - OpenApi__ServerUrl=http://localhost:8000/document
+
+  documentingestionworker:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - RabbitMQ__Uri=${RabbitMQ__Uri}
+      - ConnectionStrings__Postgres=${ConnectionStrings__Postgres}
+      - Ollama__BaseUrl=${Ollama__BaseUrl}
+      - Ollama__EmbeddingModel=${Ollama__EmbeddingModel}
+      - Ollama__TimeoutSeconds=${Ollama__TimeoutSeconds}
+      - S3__Endpoint=${S3__Endpoint}
+      - S3__AccessKey=${S3__AccessKey}
+      - S3__SecretKey=${S3__SecretKey}
+      - S3__Bucket=${S3__Bucket}
+      - KreuzbergParser__EnableChunking=${KreuzbergParser__EnableChunking}
+      - KreuzbergParser__ChunkMaxChars=${KreuzbergParser__ChunkMaxChars}
+      - KreuzbergParser__ChunkOverlap=${KreuzbergParser__ChunkOverlap}
+      - KreuzbergParser__EnableOcr=${KreuzbergParser__EnableOcr}
+      - KreuzbergParser__OcrBackend=${KreuzbergParser__OcrBackend}
+      - KreuzbergParser__OcrLanguage=${KreuzbergParser__OcrLanguage}
+      - KreuzbergParser__EnableLanguageDetection=${KreuzbergParser__EnableLanguageDetection}
+      - KreuzbergParser__UseCache=${KreuzbergParser__UseCache}
+      - KreuzbergParser__EnableQualityProcessing=${KreuzbergParser__EnableQualityProcessing}
+
+  notificationserviceapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - Keycloak__Authority=${Keycloak__Authority}
+      - Keycloak__Audience=${Keycloak__Audience}
+      - RabbitMQ__Uri=${RabbitMQ__Uri}
+
+  aiserviceworker:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__Postgres=${ConnectionStrings__Postgres}
+      - Ollama__BaseUrl=${Ollama__BaseUrl}
+      - Ollama__Model=${Ollama__Model}
+      - Ollama__TimeoutSeconds=${Ollama__TimeoutSeconds}
+      - OpenAI__ApiKey=${OpenAI__ApiKey}
+      - OpenAI__Model=${OpenAI__Model}
+      - Ollama__EmbeddingModel=${Ollama__EmbeddingModel}
+      - RabbitMQ__Uri=${RabbitMQ__Uri}

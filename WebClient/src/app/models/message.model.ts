@@ -6,5 +6,6 @@ export interface Message {
   role: number;
   sentAt: string;
   isEdited: boolean;
-  version:number;
+  version: number;
+  sources?: string[];
 }

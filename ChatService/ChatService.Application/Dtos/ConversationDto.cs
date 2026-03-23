@@ -8,6 +8,8 @@ public record ConversationDto
 
     public string Title { get; init; } = string.Empty;
 
+    public string Summary { get; init; } = string.Empty;
+
     public DateTime StartedAt { get; init; }
 
     public DateTime LastActivityAt { get; init; }

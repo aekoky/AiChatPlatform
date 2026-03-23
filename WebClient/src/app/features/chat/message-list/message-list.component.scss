@@ -124,6 +124,32 @@
       word-break: break-word;
     }
 
+    .message-sources {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(0, 0, 0, 0.04);
+        color: var(--mat-sys-on-surface-variant);
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+      }
+    }
+
     .message-time {
       display: block;
       font-size: 0.7rem;

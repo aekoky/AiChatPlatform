@@ -1,4 +1,4 @@
-﻿namespace BuildingBlocks.Core;
+namespace BuildingBlocks.Core;
 
 public interface IEventStoreRepository<TA> where TA : BaseAggregate
 {

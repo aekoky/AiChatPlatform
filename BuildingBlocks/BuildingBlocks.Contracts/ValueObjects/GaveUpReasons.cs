@@ -1,4 +1,4 @@
-﻿namespace BuildingBlocks.Contracts.ValueObjects;
+namespace BuildingBlocks.Contracts.ValueObjects;
 
 public static class GaveUpReasons
 {
