@@ -4,13 +4,14 @@ using AiService.Infrastructure.Extensions;
 using AiService.Infrastructure.Options;
 using BuildingBlocks.Contracts.Models;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Runtime.CompilerServices;
 
 namespace AiService.Infrastructure.Services;
 
 public class OllamaLlmService(
-    IChatClient chatClient,
+    [FromKeyedServices("BaseChatClient")] IChatClient chatClient,
     IOptionsSnapshot<AiPromptOptions> promptOptions) : ILlmService
 {
     private AiPromptOptions Prompts => promptOptions.Value;

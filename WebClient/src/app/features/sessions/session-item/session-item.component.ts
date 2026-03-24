@@ -35,7 +35,7 @@ export class SessionItemComponent {
     });
     dialogRef.afterClosed().subscribe(confirmed => {
       if (confirmed) {
-        this.sessionStore.closeConversation({ sessionId: this.session.id, version: this.session.version });
+        this.sessionStore.closeConversation({ sessionId: this.session.id, version: this.session.metadata.sessionVersion });
       }
     });
   }

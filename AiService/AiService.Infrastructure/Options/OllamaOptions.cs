@@ -8,6 +8,8 @@ public class OllamaOptions
 
     public string Model { get; set; } = string.Empty;
 
+    public string InstructModel { get; set; } = string.Empty;
+
     public string EmbeddingModel { get; set; } = string.Empty;
 
     public int TimeoutSeconds { get; set; } = 300;

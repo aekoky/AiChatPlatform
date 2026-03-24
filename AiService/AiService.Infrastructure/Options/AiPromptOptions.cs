@@ -49,7 +49,7 @@ public class AiPromptOptions
     /// Binary classifier to decide if RAG retrieval is needed.
     /// </summary>
     public string RagDecisionPrompt { get; set; } = """
-        Determine if this message requires searching internal documents to answer properly.
+        Determine if the user conversation requires searching internal documents to answer properly.
         
         Output EXACTLY: YES or NO (nothing else)
         

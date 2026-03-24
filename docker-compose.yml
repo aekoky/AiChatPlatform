@@ -209,7 +209,7 @@ services:
 
   ollama-pull:
     image: ollama/ollama:latest
-    entrypoint: ["/bin/sh", "-c", "ollama pull llama3 && ollama pull nomic-embed-text"]
+    entrypoint: ["/bin/sh", "-c", "ollama pull llama3 && ollama pull llama3:instruct && ollama pull nomic-embed-text"]
     environment:
       - OLLAMA_HOST=http://ollama:11434
     volumes:

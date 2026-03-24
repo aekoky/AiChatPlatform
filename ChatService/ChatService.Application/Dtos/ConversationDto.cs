@@ -16,5 +16,5 @@ public record ConversationDto
 
     public bool Closed { get; init; }
 
-    public long Version { get; init; }
+    public ConversationMetadataDto Metadata { get; init; } = new();
 }

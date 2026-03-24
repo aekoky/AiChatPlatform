@@ -3,6 +3,7 @@ using AiService.Application.Services;
 using BuildingBlocks.Contracts.LlmEvents;
 using BuildingBlocks.Contracts.ValueObjects;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text;
 using Wolverine;
 
@@ -89,6 +90,8 @@ public class GenerateAiResponseHandler(
         var totalTokenCount = 0;
         var currentBatch = new StringBuilder();
         var batchTokenCount = 0;
+        var stopwatch = Stopwatch.StartNew();
+        var flushInter = TimeSpan.FromMicroseconds(150);
 
         await foreach (var token in llmService.GenerateAsync(message.Messages, ragResult, ct))
         {
@@ -97,7 +100,7 @@ public class GenerateAiResponseHandler(
             totalTokenCount++;
             batchTokenCount++;
 
-            if (batchTokenCount % 10 == 0)
+            if (stopwatch.Elapsed >= flushInter)
             {
                 await context.PublishAsync(new LlmTokensGeneratedEvent(
                     message.RequestId,
@@ -106,7 +109,7 @@ public class GenerateAiResponseHandler(
                     currentBatch.ToString(),
                     batchTokenCount));
                 currentBatch.Clear();
-                batchTokenCount = 0;
+                stopwatch.Restart();
             }
         }
 

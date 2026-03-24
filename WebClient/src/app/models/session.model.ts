@@ -4,5 +4,9 @@ export interface Session {
   title: string;
   startedAt: string;
   lastActivityAt: string;
-  version:number;
+  metadata: SessionMetadata;
+}
+export interface SessionMetadata {
+  sessionVersion: number;
+  messageVersion: number;
 }

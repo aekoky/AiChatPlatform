@@ -21,20 +21,15 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddOllamaLlmClient(this IServiceCollection services)
     {
-        services.AddHttpClient("OllamaChat", (sp, client) =>
+        services.AddKeyedChatClient("BaseChatClient", sp =>
         {
             var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
-            client.BaseAddress = new Uri(options.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            return new OllamaApiClient(options.BaseUrl, options.InstructModel);
         });
-
-        services.AddChatClient(sp =>
+        services.AddKeyedChatClient("InstructChatClient", sp =>
         {
-            var factory = sp.GetRequiredService<IHttpClientFactory>();
-            var httpClient = factory.CreateClient("OllamaChat");
             var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
-
-            return new OllamaApiClient(httpClient, options.Model);
+            return new OllamaApiClient(options.BaseUrl, options.InstructModel);
         });
 
         return services;

@@ -65,6 +65,7 @@ services:
       - ConnectionStrings__Postgres=${ConnectionStrings__Postgres}
       - Ollama__BaseUrl=${Ollama__BaseUrl}
       - Ollama__Model=${Ollama__Model}
+      - Ollama__InstructModel=${Ollama__InstructModel}
       - Ollama__TimeoutSeconds=${Ollama__TimeoutSeconds}
       - OpenAI__ApiKey=${OpenAI__ApiKey}
       - OpenAI__Model=${OpenAI__Model}

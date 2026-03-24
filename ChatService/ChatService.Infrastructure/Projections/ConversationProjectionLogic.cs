@@ -15,7 +15,12 @@ public static class ConversationProjectionLogic
             Title = @event.Title,
             StartedAt = @event.StartedAt,
             LastActivityAt = @event.LastActivityAt,
-            Summary = string.Empty
+            Summary = string.Empty,
+            Metadata= new ConversationMetadataDto
+            {
+                SessionVersion = 1,
+                MessageVersion = 0
+            }
         };
     }
 
@@ -23,6 +28,7 @@ public static class ConversationProjectionLogic
     {
         if (current is null) return null;
 
+        current.Metadata.SessionVersion++;
         return current with
         {
             Summary = @event.Summary,
@@ -34,6 +40,7 @@ public static class ConversationProjectionLogic
     {
         if (current is null) return null;
 
+        current.Metadata.SessionVersion++;
         return current with
         {
             Title = @event.Title,
@@ -45,9 +52,10 @@ public static class ConversationProjectionLogic
     {
         if (current is null) return null;
 
+        current.Metadata.MessageVersion++;
         return current with
         {
-            LastActivityAt = @event.SentAt
+            LastActivityAt = @event.SentAt,
         };
     }
 

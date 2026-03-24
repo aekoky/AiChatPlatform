@@ -4,12 +4,13 @@ using AiService.Infrastructure.Extensions;
 using AiService.Infrastructure.Options;
 using BuildingBlocks.Contracts.Models;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace AiService.Infrastructure.Services;
 
 public class RagTool(
-    IChatClient chatClient,
+    [FromKeyedServices("InstructChatClient")] IChatClient chatClient,
     IRagRetrievalService retrievalService,
     IOptionsSnapshot<AiPromptOptions> options) : IRagTool
 {
@@ -29,7 +30,6 @@ public class RagTool(
             new(ChatRole.System, options.Value.RagDecisionPrompt),
             new(ChatRole.User, latestUserMessage.Content)
         };
-
         var response = await chatClient.GetResponseAsync(chatMessages, ChatOptionsFactory.CreateDecisionOptions(), cancellationToken: ct);
 
         return response.Text.Trim().StartsWith("YES", StringComparison.OrdinalIgnoreCase);

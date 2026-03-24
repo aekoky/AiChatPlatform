@@ -99,7 +99,7 @@ public class ConversationSaga : Saga
         var conversation = await readOnlyEventStore.QueryFirstOrDefaultAsync<ConversationDto>(
             q => q.Where(c => c.Id == message.SessionId)).ConfigureAwait(false);
         if (conversation == null) return;
-        var session = await repository.LoadAsync(message.SessionId, conversation.Version);
+        var session = await repository.LoadAsync(message.SessionId, conversation.Metadata.SessionVersion);
         if (session == null) return;
 
         session.UpdateSummary(message.Summary);
