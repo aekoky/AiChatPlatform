@@ -14,6 +14,7 @@ using OllamaSharp;
 using OpenAI;
 using Wolverine;
 using Wolverine.RabbitMQ;
+using Wolverine.Runtime.Handlers;
 
 namespace AiService.Infrastructure;
 
@@ -97,13 +98,14 @@ public static class ServiceCollectionExtensions
         // Set a longer timeout for LLM operations, as they can take time to complete
         opts.DefaultExecutionTimeout = TimeSpan.FromSeconds(300);
 
-        opts.Policies.UseDurableLocalQueues();
-
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
-        opts.ListenToRabbitQueue("llm-requests");
+        opts.ListenToRabbitQueue("llm-requests")
+            .UseDurableInbox()
+            .Sequential();
 
         opts.ListenToRabbitQueue("llm-summarization")
+            .UseDurableInbox()
             .Sequential();
 
         opts.PublishMessage<LlmTokensGeneratedEvent>()
@@ -118,12 +120,15 @@ public static class ServiceCollectionExtensions
             .SendInline();
 
         opts.PublishMessage<SessionSummaryGeneratedEvent>()
-            .ToRabbitQueue("summary-tokens");
+            .ToRabbitQueue("summary-tokens")
+            .UseDurableOutbox();
 
         opts.PublishMessage<LlmResponseCompletedEvent>()
-            .ToRabbitExchange("llm-completed");
+            .ToRabbitExchange("llm-completed")
+            .UseDurableOutbox();
 
         opts.PublishMessage<LlmResponseGaveUpEvent>()
-            .ToRabbitExchange("llm-gave-up");
+            .ToRabbitExchange("llm-gave-up")
+            .UseDurableOutbox();
     }
 }

@@ -53,8 +53,14 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(LlmTokensGeneratedHandler).Assembly);
     opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
-    opts.ListenToRabbitQueue("llm-tokens").Sequential();
-    opts.ListenToRabbitQueue("llm-sources");
+    opts.ListenToRabbitQueue("llm-tokens")
+        .Sequential()
+        .ProcessInline();
+
+    opts.ListenToRabbitQueue("llm-sources")
+        .Sequential()
+        .ProcessInline();
+
     opts.ListenToRabbitQueue("llm-retrying");
     opts.ListenToRabbitQueue("llm-completed.notificationservice");
     opts.ListenToRabbitQueue("llm-gave-up.notificationservice");

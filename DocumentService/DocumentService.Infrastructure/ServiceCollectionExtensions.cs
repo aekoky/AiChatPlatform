@@ -78,20 +78,21 @@ public static class ServiceCollectionExtensions
 
         opts.Discovery.IncludeAssembly(typeof(UploadDocumentCommand).Assembly);
         opts.Policies.AutoApplyTransactions();
-        opts.Policies.UseDurableLocalQueues();
 
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
         opts.PublishMessage<DocumentUploadedEvent>()
-            .ToRabbitQueue("document-uploaded");
+            .ToRabbitQueue("document-uploaded")
+            .UseDurableOutbox();
 
         opts.PublishMessage<DocumentDeletedEvent>()
-            .ToRabbitQueue("document-deleted");
+            .ToRabbitQueue("document-deleted")
+            .UseDurableOutbox();
 
         opts.ListenToRabbitQueue("document-indexed")
-            .PreFetchCount(10);
+            .UseDurableInbox();
 
         opts.ListenToRabbitQueue("document-failed")
-            .PreFetchCount(10);
+            .UseDurableInbox();
     }
 }

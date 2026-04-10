@@ -106,19 +106,20 @@ public static class ServiceCollectionExtensions
         opts.Discovery.IncludeAssembly(typeof(DocumentUploadedHandler).Assembly);
         opts.DefaultExecutionTimeout = TimeSpan.FromSeconds(300);
 
-        opts.Policies.UseDurableLocalQueues();
-
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
         opts.ListenToRabbitQueue("document-uploaded")
-            .Sequential();
+            .UseDurableInbox();
 
-        opts.ListenToRabbitQueue("document-deleted");
+        opts.ListenToRabbitQueue("document-deleted")
+            .UseDurableInbox();
 
         opts.PublishMessage<DocumentIndexedEvent>()
-            .ToRabbitQueue("document-indexed");
+            .ToRabbitQueue("document-indexed")
+            .UseDurableOutbox();
 
         opts.PublishMessage<DocumentIndexingFailedEvent>()
-            .ToRabbitQueue("document-failed");
+            .ToRabbitQueue("document-failed")
+            .UseDurableOutbox();
     }
 }

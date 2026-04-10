@@ -8,14 +8,12 @@ using ChatService.Domain.Session.Events;
 using ChatService.Infrastructure.EventStore;
 using ChatService.Infrastructure.Options;
 using ChatService.Infrastructure.Projections;
-using JasperFx;
 using JasperFx.Core;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Wolverine;
 using Wolverine.ErrorHandling;
 using Wolverine.Marten;
@@ -30,9 +28,7 @@ public static class WolverineMartenConfiguration
         services.AddMarten(sp =>
         {
             var opts = new StoreOptions();
-
             opts.Connection(connectionString);
-
             // Marten event types
             opts.Events.AddEventType<SessionCreatedEvent>();
             opts.Events.AddEventType<MessageCreatedEvent>();
@@ -70,36 +66,39 @@ public static class WolverineMartenConfiguration
 
         opts.Discovery.IncludeAssembly(typeof(StartChatCommand).Assembly);
         opts.Discovery.IncludeAssembly(typeof(ConversationSaga).Assembly);
-        opts.Policies.AutoApplyTransactions();
-        opts.Policies.UseDurableLocalQueues();
-        
+
         // Handle pessimistic saga concurrency failures by jittering retries
-        opts.Policies.OnException<ConcurrencyException>()
+        opts.Policies.OnException<TimeoutException>()
             .RetryWithCooldown(50.Milliseconds(), 100.Milliseconds(), 250.Milliseconds());
+        opts.Policies.AutoApplyTransactions();
 
         opts.UseRabbitMq(new Uri(rabbitOptions.Uri));
 
         // ChatService → AiService: send LLM request
         opts.PublishMessage<LlmResponseRequestedEvent>()
-            .ToRabbitQueue("llm-requests");
+            .ToRabbitQueue("llm-requests")
+            .UseDurableOutbox();
 
         opts.PublishMessage<SessionSummarizeRequestedEvent>()
-            .ToRabbitQueue("llm-summarization");
+            .ToRabbitQueue("llm-summarization")
+            .UseDurableOutbox();
 
         opts.PublishMessage<SessionTitleUpdatedNotificationEvent>()
-            .ToRabbitExchange("session-notifications");
+            .ToRabbitExchange("session-notifications")
+            .UseDurableOutbox();
 
         opts.PublishMessage<SessionSummaryUpdatedNotificationEvent>()
-            .ToRabbitExchange("session-notifications");
+            .ToRabbitExchange("session-notifications")
+            .UseDurableOutbox();
 
         // AiService → ChatService: receive completed response, route to saga
         opts.ListenToRabbitQueue("llm-completed.chatservice")
-            .PreFetchCount(10);
+            .UseDurableInbox();
 
         opts.ListenToRabbitQueue("llm-gave-up.chatservice")
-            .PreFetchCount(10);
+            .UseDurableInbox();
 
         opts.ListenToRabbitQueue("summary-tokens")
-            .PreFetchCount(10);
+            .UseDurableInbox();
     }
 }

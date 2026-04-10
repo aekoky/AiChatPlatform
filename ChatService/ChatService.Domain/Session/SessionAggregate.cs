@@ -14,6 +14,7 @@ public class SessionAggregate : BaseAggregate
     public DateTime LastActivityAt { get; private set; }
 
     public DateTime? DeletedAt { get; private set; }
+
     public string Summary { get; private set; } = string.Empty;
 
     public SessionAggregate()
@@ -77,7 +78,7 @@ public class SessionAggregate : BaseAggregate
         Title = @event.Title;
         StartedAt = @event.StartedAt;
         LastActivityAt = @event.LastActivityAt;
-
+        
         Version++;
     }
 

@@ -102,7 +102,7 @@ public class GenerateAiResponseHandler(
 
             if (stopwatch.Elapsed >= flushInter)
             {
-                await context.PublishAsync(new LlmTokensGeneratedEvent(
+                await context.InvokeAsync(new LlmTokensGeneratedEvent(
                     message.RequestId,
                     message.SessionId,
                     message.UserId,
@@ -115,7 +115,7 @@ public class GenerateAiResponseHandler(
 
         if (currentBatch.Length > 0)
         {
-            await context.PublishAsync(new LlmTokensGeneratedEvent(
+            await context.InvokeAsync(new LlmTokensGeneratedEvent(
                 message.RequestId,
                 message.SessionId,
                 message.UserId,
@@ -169,7 +169,7 @@ public class GenerateAiResponseHandler(
         try
         {
             using var retrieveCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            retrieveCts.CancelAfter(TimeSpan.FromSeconds(10));
+            retrieveCts.CancelAfter(TimeSpan.FromSeconds(500));
 
             return await ragTool.ExecuteAsync(
                 userQuery,
